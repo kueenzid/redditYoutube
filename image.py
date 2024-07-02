@@ -9,7 +9,7 @@ def add_awards(draw, image, awards_x, awards_y):
     font_size = 30
 
     # Load award icons
-    awards_folder = "assets/awards"
+    awards_folder = os.path.join("assets", "awards")
     awards = [os.path.join(awards_folder, f) for f in os.listdir(awards_folder) if os.path.isfile(os.path.join(awards_folder, f))]
     selected_awards = random.sample(awards, 4)
     award_y = awards_y + award_spacing
@@ -34,7 +34,7 @@ def create_custom_image(output_path, text):
     draw = ImageDraw.Draw(image)
 
     # Load the profile icon
-    icon_path = "assets/profileIcon.webp"
+    icon_path = os.path.join("assets", "profileIcon.webp")
     icon = Image.open(icon_path)
     icon = icon.resize((100, 100))
     icon_x = padding

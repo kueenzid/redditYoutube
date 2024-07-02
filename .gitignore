@@ -1,4 +1,9 @@
 config.py
 __pycache__/
 .idea/
+
 youtubeRedditEnv/
+
+Output/*
+
+Youtube/Config/*
