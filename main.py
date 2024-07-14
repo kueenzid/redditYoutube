@@ -1,12 +1,19 @@
 import os
 from reddit import get_hottest_posts
 from image import create_custom_image
+from redditScreenshot import take_screenshot_from_html
 from Youtube.auth import authenticate as authYoutube
 from Youtube.upload import upload_video, get_authenticated_service
 
 posts = get_hottest_posts('python', 1)
 
-create_custom_image(os.path.join("Output", "output.png"), posts[0]['Title'])
+if posts:
+    html_content = posts[0]['HTML_Content']
+    screenshot_path = os.path.join("Output", "post_screenshot.png")
+
+    take_screenshot_from_html(html_content, screenshot_path)
+else:
+    print("Failed to fetch posts.")
 
 authYoutube()
 service = get_authenticated_service()
