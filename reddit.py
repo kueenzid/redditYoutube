@@ -1,5 +1,6 @@
 import praw
 import config
+import requests
 
 def get_hottest_posts(subreddit_name, limit=1):
     # Initialize the Reddit instance with your credentials
@@ -18,6 +19,9 @@ def get_hottest_posts(subreddit_name, limit=1):
     # Prepare the data
     posts_data = []
     for post in hottest_posts:
+        response = requests.get(post.url)
+        html_content = response.text if response.status_code == 200 else "Failed to fetch HTML content"
+
         post_info = {
             "Title": post.title,
             "Score": post.score,
@@ -25,6 +29,7 @@ def get_hottest_posts(subreddit_name, limit=1):
             "URL": post.url,
             "Comments": post.num_comments,
             "Description": post.selftext if post.selftext else 'No description available.',
+            "HTML_Content": html_content,  # Add the HTML content here
             "Top_Comments": []
         }
 
