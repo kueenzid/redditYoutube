@@ -1,4 +1,5 @@
 import os
+import re
 from reddit import get_hottest_posts
 from image import create_custom_image
 from redditScreenshot import take_screenshot_from_html
@@ -22,7 +23,7 @@ def modifyFileName(url):
 
 
 def replaceSpecialCharacters(url):
-    return url[25:].replace("/", "_").replace("?", "_").replace(":", "_").replace("*", "_").replace("|", "_").replace("\"", "_").replace("<", "_").replace(">", "_").replace("\\", "_")
+    return re.sub("\W", "_", url[25:])
 
 
 numberOfPosts = 3
