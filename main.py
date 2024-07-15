@@ -5,17 +5,43 @@ from redditScreenshot import take_screenshot_from_html
 from Youtube.auth import authenticate as authYoutube
 from Youtube.upload import upload_video, get_authenticated_service
 
-posts = get_hottest_posts('python', 1)
+def modifyFileName(url):
+    modified_fileName = replaceSpecialCharacters(url)
 
-if posts:
-    html_content = posts[0]['HTML_Content']
-    screenshot_path = os.path.join("Output", "post_screenshot.png")
-    whole_screenshot_path = os.path.join("Output", "page_screenshot.png")
+    first_underscore_index = modified_fileName.find('_')
 
-    take_screenshot_from_html(html_content, screenshot_path, 'shreddit-post')
-    take_screenshot_from_html(html_content, whole_screenshot_path, 'body')
-else:
-    print("Failed to fetch posts.")
+    if first_underscore_index == -1:
+        return modified_fileName
+
+    second_underscore_index = modified_fileName.find('_', first_underscore_index + 1)
+
+    if second_underscore_index == -1:
+        return modified_fileName
+
+    return modified_fileName[second_underscore_index + 1:]
+
+
+def replaceSpecialCharacters(url):
+    return url[25:].replace("/", "_").replace("?", "_").replace(":", "_").replace("*", "_").replace("|", "_").replace("\"", "_").replace("<", "_").replace(">", "_").replace("\\", "_")
+
+
+numberOfPosts = 3
+
+posts = get_hottest_posts('Python', numberOfPosts)
+
+for post in posts:
+    if post:
+        html_content = post['HTML_Content']
+        fileName = modifyFileName(post['URL'])
+        folderName = replaceSpecialCharacters(post['URL']).split('_')[0]
+
+        screenshot_path = os.path.join("Output", folderName ,fileName + "_post_screenshot.png")
+        whole_screenshot_path = os.path.join("Output", folderName ,fileName + "_page_screenshot.png")
+
+        take_screenshot_from_html(html_content, screenshot_path, 'shreddit-post')
+        take_screenshot_from_html(html_content, whole_screenshot_path, 'body')
+    else:
+        print("Failed to fetch posts.")
 
 #authYoutube()
 #service = get_authenticated_service()

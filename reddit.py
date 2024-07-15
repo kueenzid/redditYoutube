@@ -2,7 +2,7 @@ import praw
 import config
 import requests
 
-def get_hottest_posts(subreddit_name, limit=1):
+def get_hottest_posts(subreddit_name, limit):
     # Initialize the Reddit instance with your credentials
     reddit = praw.Reddit(
         client_id=config.client_id,
