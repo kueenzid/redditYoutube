@@ -27,7 +27,7 @@ def replaceSpecialCharacters(url):
 
 numberOfPosts = 3
 
-posts = get_hottest_posts('Python', numberOfPosts)
+posts = get_hottest_posts('AskReddit', numberOfPosts)
 
 for post in posts:
     if post:
@@ -35,8 +35,8 @@ for post in posts:
         fileName = modifyFileName(post['URL'])
         folderName = replaceSpecialCharacters(post['URL']).split('_')[0]
 
-        screenshot_path = os.path.join("Output", folderName ,fileName + "_post_screenshot.png")
-        whole_screenshot_path = os.path.join("Output", folderName ,fileName + "_page_screenshot.png")
+        screenshot_path = os.path.join("Output", folderName ,fileName ,"post_screenshot.png")
+        whole_screenshot_path = os.path.join("Output", folderName, fileName ,"page_screenshot.png")
 
         take_screenshot_from_html(html_content, screenshot_path, 'shreddit-post')
         take_screenshot_from_html(html_content, whole_screenshot_path, 'body')
