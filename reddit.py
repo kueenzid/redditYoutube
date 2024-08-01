@@ -14,7 +14,7 @@ def get_hottest_posts(subreddit_name, limit):
     subreddit = reddit.subreddit(subreddit_name)
 
     # Fetch the hottest posts
-    hottest_posts = subreddit.hot(limit=limit)
+    hottest_posts = subreddit.top(time_filter='day', limit=limit)
 
     # Prepare the data
     posts_data = []
