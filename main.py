@@ -3,7 +3,7 @@ import os
 import re
 from reddit import get_hottest_posts
 from image import create_custom_image
-from redditScreenshot import take_screenshot
+from redditScreenshot import ScreenshotTaker
 from Youtube.auth import authenticate as authYoutube
 from Youtube.upload import upload_video, get_authenticated_service
 
@@ -31,6 +31,9 @@ numberOfPosts = 3
 
 posts = get_hottest_posts('AskReddit', numberOfPosts)
 
+screenshot_taker = ScreenshotTaker()
+
+
 for post in posts:
     if post:
         url = post['URL']
@@ -40,10 +43,12 @@ for post in posts:
         screenshot_path = os.path.join("Output", folderName ,fileName ,"post_screenshot.png")
         whole_screenshot_path = os.path.join("Output", folderName, fileName ,"page_screenshot.png")
 
-        take_screenshot(url, screenshot_path, 'shreddit-post')
-        take_screenshot(url, whole_screenshot_path, 'body')
+        screenshot_taker.take_screenshot(url, screenshot_path, 'shreddit-post')
+        #take_screenshot(url, whole_screenshot_path, 'body')
     else:
         print("Failed to fetch posts.")
+
+screenshot_taker.close()
 
 #authYoutube()
 #service = get_authenticated_service()
