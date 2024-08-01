@@ -1,8 +1,9 @@
+import asyncio
 import os
 import re
 from reddit import get_hottest_posts
 from image import create_custom_image
-from redditScreenshot import take_screenshot_from_html
+from redditScreenshot import take_screenshot
 from Youtube.auth import authenticate as authYoutube
 from Youtube.upload import upload_video, get_authenticated_service
 
@@ -32,15 +33,15 @@ posts = get_hottest_posts('AskReddit', numberOfPosts)
 
 for post in posts:
     if post:
-        html_content = post['HTML_Content']
+        url = post['URL']
         fileName = modifyFileName(post['URL'])
         folderName = replaceSpecialCharacters(post['URL']).split('_')[0]
 
         screenshot_path = os.path.join("Output", folderName ,fileName ,"post_screenshot.png")
         whole_screenshot_path = os.path.join("Output", folderName, fileName ,"page_screenshot.png")
 
-        take_screenshot_from_html(html_content, screenshot_path, 'shreddit-post')
-        take_screenshot_from_html(html_content, whole_screenshot_path, 'body')
+        take_screenshot(url, screenshot_path, 'shreddit-post')
+        take_screenshot(url, whole_screenshot_path, 'body')
     else:
         print("Failed to fetch posts.")
 
