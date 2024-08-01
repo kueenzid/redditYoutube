@@ -10,7 +10,8 @@ class ScreenshotTaker:
         self.context = self.browser.new_context(
             locale="en-us",
             color_scheme="dark",
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            viewport={"width": 1080, "height": 720}
         )
         self.page = self.context.new_page()
         self._login()

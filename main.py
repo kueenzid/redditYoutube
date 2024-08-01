@@ -41,9 +41,9 @@ for post in posts:
         folderName = replaceSpecialCharacters(post['URL']).split('_')[0]
 
         screenshot_path = os.path.join("Output", folderName ,fileName ,"post_screenshot.png")
-        whole_screenshot_path = os.path.join("Output", folderName, fileName ,"page_screenshot.png")
-
         screenshot_taker.take_screenshot(url, screenshot_path, 'shreddit-post')
+
+        #whole_screenshot_path = os.path.join("Output", folderName, fileName ,"page_screenshot.png")
         #take_screenshot(url, whole_screenshot_path, 'body')
     else:
         print("Failed to fetch posts.")
