@@ -4,6 +4,7 @@ import re
 from reddit import get_hottest_posts
 from image import create_custom_image
 from redditScreenshot import ScreenshotTaker
+from TextToSpeech import TextToSpeech
 from Youtube.auth import authenticate as authYoutube
 from Youtube.upload import upload_video, get_authenticated_service
 
@@ -28,10 +29,13 @@ def replaceSpecialCharacters(url):
 
 
 numberOfPosts = 3
+output_folder = "Output"
+
+screenshot_taker = ScreenshotTaker()
+textToSpeech = TextToSpeech()
 
 posts = get_hottest_posts('AskReddit', numberOfPosts)
 
-screenshot_taker = ScreenshotTaker()
 
 
 for post in posts:
@@ -39,9 +43,15 @@ for post in posts:
         url = post['URL']
         fileName = modifyFileName(post['URL'])
         folderName = replaceSpecialCharacters(post['URL']).split('_')[0]
+        pathName = os.path.join(output_folder, folderName, fileName)
 
-        screenshot_path = os.path.join("Output", folderName ,fileName ,"post_screenshot.png")
+        screenshot_path = os.path.join(pathName, "post_screenshot.png")
         screenshot_taker.take_screenshot(url, screenshot_path, 'shreddit-post')
+
+        textToSpeech.create_text_to_speech_file(post['Title'], os.path.join(pathName, "title.wav"))
+
+        for i, comment in enumerate(post['Top_Comments']):
+            textToSpeech.create_text_to_speech_file(comment['Body'], os.path.join(pathName, f"comment_{i}.wav"))
 
         #whole_screenshot_path = os.path.join("Output", folderName, fileName ,"page_screenshot.png")
         #take_screenshot(url, whole_screenshot_path, 'body')
