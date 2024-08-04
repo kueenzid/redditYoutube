@@ -7,7 +7,7 @@ import random
 input_video = 'assets/backgroundVideos/Minecraft_1080p_vertical.mp4'
 
 # Define the duration and position for the overlay image
-title_start = 0.5  # overlay starts at 0.5 seconds
+title_start = 0  # overlay starts at 0.5 seconds
 overlay_position = (10, 10)  # position of the overlay image (x, y)
 
 def get_audio_duration(file_path):
@@ -75,8 +75,7 @@ def generate_video(path):
 
     # audio overlay
     audio_overlay = ffmpeg.input(total_audio_path)
-    video = ffmpeg.overlay(video, audio_overlay)
 
     # Output the final video
-    video = ffmpeg.output(video, output_video)
+    video = ffmpeg.output(video, audio_overlay, output_video)
     ffmpeg.run(video)
