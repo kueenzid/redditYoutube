@@ -35,7 +35,7 @@ def get_hottest_posts(subreddit_name, limit):
 
         # Fetch the top 5 comments for the post
         post.comments.replace_more(limit=0)
-        top_comments = post.comments.list()[:5]
+        top_comments = post.comments.list()[:2]
         for comment in top_comments:
             post_info["Top_Comments"].append({
                 "Author": comment.author.name if comment.author else "N/A",
