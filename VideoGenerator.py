@@ -23,19 +23,28 @@ def get_video_duration(file_path):
     return duration
 
 def concatenate_audio_files(total_audio_path, title_audio, comment_audios):
-    # Load the title audio
+    # Start with the title audio
     concatenated_audio = ffmpeg.input(title_audio)
-    silent = ffmpeg.input('anullsrc=r=44100:cl=stereo', f='lavfi', t=0.5)
-    concatenated_audio.concat(concatenated_audio, silent, v=0, a=1)
 
-# Load and concatenate the comment audios
+    # Create a silent audio segment
+    silent = ffmpeg.input('anullsrc=r=44100:cl=stereo', f='lavfi', t=0.5)
+
+    # List to hold all the input segments
+    input_segments = [concatenated_audio, silent]
+
+    # Add each comment audio followed by a silent segment
     for audio_file in comment_audios:
         audio = ffmpeg.input(audio_file)
-        concatenated_audio.concat(concatenated_audio, audio, v=0, a=1)
-        concatenated_audio.concat(concatenated_audio, silent, v=0, a=1)
+        input_segments.extend([audio, silent])
 
-    # Concatenate the audio files
-    ffmpeg.run(ffmpeg.output(concatenated_audio, total_audio_path))
+    # Concatenate all audio segments
+    concatenated = ffmpeg.concat(*input_segments, v=0, a=1).node
+
+    # Output the concatenated audio
+    output = ffmpeg.output(concatenated[0], total_audio_path)
+
+    # Run the ffmpeg command
+    ffmpeg.run(output)
 
 def generate_video(path):
     post_screenshot_image = os.path.join(path, 'post_screenshot.png')
