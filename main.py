@@ -31,9 +31,13 @@ def replaceSpecialCharacters(url):
 
 numberOfPosts = 1
 output_folder = "Output"
+is_screenshot_taker = False
+is_textToSpeech = True
 
-screenshot_taker = ScreenshotTaker()
-textToSpeech = TextToSpeech_Local()
+if is_screenshot_taker:
+    screenshot_taker = ScreenshotTaker()
+if is_textToSpeech:
+    textToSpeech = TextToSpeech_Local()
 
 posts = get_hottest_posts('AskReddit', numberOfPosts)
 
@@ -46,11 +50,9 @@ for post in posts:
         folderName = replaceSpecialCharacters(post['URL']).split('_')[0]
         pathName = os.path.join(output_folder, folderName, fileName)
 
-        screenshot_path = os.path.join(pathName, "post_screenshot.png")
-        screenshot_taker.take_screenshot(url, screenshot_path, 'shreddit-post')
-
-        #whole_screenshot_path = os.path.join("Output", folderName, fileName ,"page_screenshot.png")
-        #take_screenshot(url, whole_screenshot_path, 'body')
+        if is_screenshot_taker:
+            screenshot_path = os.path.join(pathName, "post_screenshot.png")
+            screenshot_taker.take_screenshot(url, screenshot_path, 'shreddit-post')
 
         textToSpeech.create_text_to_speech_file(post['Title'], os.path.join(pathName, "title.wav"))
 
@@ -61,7 +63,8 @@ for post in posts:
     else:
         print("Failed to fetch posts.")
 
-screenshot_taker.close()
+if is_screenshot_taker:
+    screenshot_taker.close()
 
 #authYoutube()
 #service = get_authenticated_service()
