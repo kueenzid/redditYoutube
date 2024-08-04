@@ -32,7 +32,7 @@ def replaceSpecialCharacters(url):
 numberOfPosts = 1
 output_folder = "Output"
 is_screenshot_taker = False
-is_textToSpeech = True
+is_textToSpeech = False
 
 if is_screenshot_taker:
     screenshot_taker = ScreenshotTaker()
@@ -54,10 +54,11 @@ for post in posts:
             screenshot_path = os.path.join(pathName, "post_screenshot.png")
             screenshot_taker.take_screenshot(url, screenshot_path, 'shreddit-post')
 
-        textToSpeech.create_text_to_speech_file(post['Title'], os.path.join(pathName, "title.wav"))
+        if is_textToSpeech:
+            textToSpeech.create_text_to_speech_file(post['Title'], os.path.join(pathName, "title.wav"))
 
-        for i, comment in enumerate(post['Top_Comments']):
-            textToSpeech.create_text_to_speech_file(comment['Body'], os.path.join(pathName, f"comment_{i}.wav"))
+            for i, comment in enumerate(post['Top_Comments']):
+                textToSpeech.create_text_to_speech_file(comment['Body'], os.path.join(pathName, f"comment_{i}.wav"))
 
         generate_video(pathName)
     else:
