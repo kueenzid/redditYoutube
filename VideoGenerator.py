@@ -6,9 +6,8 @@ import random
 # Define file paths
 input_video_path = 'assets/backgroundVideos/Minecraft_1080p_vertical.mp4'
 
-# Define the duration and position for the overlay image
+# Define the duration for the overlay image
 title_start = 0  # overlay starts at 0.5 seconds
-overlay_position = (10, 10)  # position of the overlay image (x, y)
 
 def get_audio_duration(file_path):
     with wave.open(file_path, 'rb') as audio_file:
@@ -78,11 +77,20 @@ def generate_video(path):
     image_width = int(image_stream_info['width'])
     image_height = int(image_stream_info['height'])
 
-    x_position = (video_width - image_width) // 2
-    y_position = (video_height - image_height) // 2
+    # Calculate target width and height for scaling
+    target_width = int(video_width * 0.8)
+    target_height = -1  # Preserve aspect ratio
 
-    # title overlay centered
-    title_overlay = ffmpeg.input(post_screenshot_image, t=title_duration)
+    # Scale and overlay title image centered
+    title_overlay = (
+        ffmpeg
+        .input(post_screenshot_image, t=title_duration)
+        .filter('scale', target_width, target_height)
+    )
+
+    x_position = (video_width - target_width) // 2
+    y_position = (video_height - image_height * (target_width / image_width)) // 2
+
     video = ffmpeg.overlay(video, title_overlay, x=x_position, y=y_position, enable=f'between(t,{title_start},{title_start + title_duration})')
 
     # audio overlay
