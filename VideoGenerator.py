@@ -4,7 +4,7 @@ import ffmpeg
 import random
 
 # Define file paths
-input_video = 'assets/backgroundVideos/Minecraft_1080p_vertical.mp4'
+input_video_path = 'assets/backgroundVideos/Minecraft_1080p_vertical.mp4'
 
 # Define the duration and position for the overlay image
 title_start = 0  # overlay starts at 0.5 seconds
@@ -63,15 +63,27 @@ def generate_video(path):
     total_duration = get_audio_duration(total_audio_path)
 
     # Determine video section
-    input_video_duration = get_video_duration(input_video)
+    input_video_duration = get_video_duration(input_video_path)
     start_time = random.randint(0, int(input_video_duration - total_duration))
 
     # Load the video and trim it
-    video = ffmpeg.input(input_video, ss=start_time, t=total_duration)
+    video = ffmpeg.input(input_video_path, ss=start_time, t=total_duration)
 
-    # title overlay
+    # Get dimensions of video and image to center the image
+    video_stream_info = ffmpeg.probe(input_video_path)['streams'][0]
+    video_width = int(video_stream_info['width'])
+    video_height = int(video_stream_info['height'])
+
+    image_stream_info = ffmpeg.probe(post_screenshot_image)['streams'][0]
+    image_width = int(image_stream_info['width'])
+    image_height = int(image_stream_info['height'])
+
+    x_position = (video_width - image_width) // 2
+    y_position = (video_height - image_height) // 2
+
+    # title overlay centered
     title_overlay = ffmpeg.input(post_screenshot_image, t=title_duration)
-    video = ffmpeg.overlay(video, title_overlay, x=overlay_position[0], y=overlay_position[1], enable=f'between(t,{title_start},{title_start + title_duration})')
+    video = ffmpeg.overlay(video, title_overlay, x=x_position, y=y_position, enable=f'between(t,{title_start},{title_start + title_duration})')
 
     # audio overlay
     audio_overlay = ffmpeg.input(total_audio_path)
