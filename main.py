@@ -28,18 +28,20 @@ def modifyFileName(url):
 def replaceSpecialCharacters(url):
     return re.sub("\W", "_", url[25:])
 
-
+subreddit_name = 'AskReddit'
 numberOfPosts = 1
+comment_count = 3
+
 output_folder = "Output"
-is_screenshot_taker = False
-is_textToSpeech = False
+is_screenshot_taker = True
+is_textToSpeech = True
 
 if is_screenshot_taker:
     screenshot_taker = ScreenshotTaker()
 if is_textToSpeech:
     textToSpeech = TextToSpeech_Local()
 
-posts = get_hottest_posts('AskReddit', numberOfPosts)
+posts = get_hottest_posts(subreddit_name, numberOfPosts, comment_count)
 
 
 

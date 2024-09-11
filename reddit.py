@@ -2,7 +2,7 @@ import praw
 import config
 import requests
 
-def get_hottest_posts(subreddit_name, limit):
+def get_hottest_posts(subreddit_name, limit, comment_count):
     # Initialize the Reddit instance with your credentials
     reddit = praw.Reddit(
         client_id=config.client_id,
@@ -35,7 +35,7 @@ def get_hottest_posts(subreddit_name, limit):
 
         # Fetch the top 5 comments for the post
         post.comments.replace_more(limit=0)
-        top_comments = post.comments.list()[:2]
+        top_comments = post.comments.list()[:comment_count]
         for comment in top_comments:
             post_info["Top_Comments"].append({
                 "Author": comment.author.name if comment.author else "N/A",
