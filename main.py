@@ -28,9 +28,10 @@ def modifyFileName(url):
 def replaceSpecialCharacters(url):
     return re.sub("\W", "_", url[25:])
 
+
 subreddit_name = 'AskReddit'
 numberOfPosts = 1
-comment_count = 3
+comment_count = 1
 
 output_folder = "Output"
 is_screenshot_taker = True
@@ -42,8 +43,6 @@ if is_textToSpeech:
     textToSpeech = TextToSpeech_Local()
 
 posts = get_hottest_posts(subreddit_name, numberOfPosts, comment_count)
-
-
 
 for post in posts:
     if post:
@@ -63,12 +62,19 @@ for post in posts:
                 textToSpeech.create_text_to_speech_file(comment['Body'], os.path.join(pathName, f"comment_{i}.wav"))
 
         generate_video(pathName)
+
+        # Create .txt file with post information
+        txt_file_path = os.path.join(pathName, "comments.txt")
+        with open(txt_file_path, 'w', encoding='utf-8') as txt_file:
+            for i, comment in enumerate(post['Top_Comments']):
+                txt_file.write(f"{comment['Body']}\n\n")
+
     else:
         print("Failed to fetch posts.")
 
 if is_screenshot_taker:
     screenshot_taker.close()
 
-#authYoutube()
-#service = get_authenticated_service()
-#upload_video(service, os.path.join("Output", "video.mp4"), posts[0]['Title'], posts[0]['Description'], '22', ['python', 'reddit'])
+# authYoutube()
+# service = get_authenticated_service()
+# upload_video(service, os.path.join("Output", "video.mp4"), posts[0]['Title'], posts[0]['Description'], '22', ['python', 'reddit'])
