@@ -33,7 +33,7 @@ def replaceSpecialCharacters(url):
 async def main():
     subreddit_name = "AskReddit"
     numberOfPosts = 1
-    comment_count = 1
+    comment_count = 2
 
     output_folder = "Output"
     is_screenshot_taker = True
