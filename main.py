@@ -6,8 +6,6 @@ from image import create_custom_image
 from redditScreenshot import ScreenshotTaker
 from TextToSpeech_Local import TextToSpeech_Local
 from VideoGenerator import generate_video
-from Youtube.auth import authenticate as authYoutube
-from Youtube.upload import upload_video, get_authenticated_service
 
 
 def modifyFileName(url):
@@ -31,7 +29,7 @@ def replaceSpecialCharacters(url):
 
 
 async def main():
-    subreddit_name = "AskReddit"
+    subreddit_name = "ask"
     numberOfPosts = 1
     comment_count = 2
 
@@ -46,6 +44,7 @@ async def main():
                 await screenshot_taker.start()
                 break
             except Exception as e:
+                print(e)
                 print("Error occurred while starting the screenshot taker. Retrying...")
 
     if is_textToSpeech:
@@ -62,7 +61,9 @@ async def main():
 
             if is_screenshot_taker:
                 screenshot_path = os.path.join(pathName, "post_screenshot.png")
-                screenshot_taker.take_screenshot(url, screenshot_path, "shreddit-post")
+                await screenshot_taker.take_screenshot(
+                    url, screenshot_path, "shreddit-post"
+                )
 
             if is_textToSpeech:
                 textToSpeech.create_text_to_speech_file(
@@ -86,7 +87,7 @@ async def main():
             print("Failed to fetch posts.")
 
     if is_screenshot_taker:
-        screenshot_taker.close()
+        await screenshot_taker.close()
 
     # authYoutube()
     # service = get_authenticated_service()
