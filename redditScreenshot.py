@@ -8,11 +8,10 @@ import config
 class ScreenshotTaker:
     def __init__(self):
         self.playwright = sync_playwright().start()
-        self.browser = self.playwright.chromium.launch(headless=False)
+        self.browser = self.playwright.firefox.launch(headless=False)
         self.context = self.browser.new_context(
             locale="en-us",
             color_scheme="dark",
-            #user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
             user_agent=self.random_user_agent(),
             viewport={"width": 720, "height": 720}
         )
@@ -53,7 +52,6 @@ class ScreenshotTaker:
         self.random_pause()
 
         with self.page.expect_navigation(timeout=60000):
-            #self.page.click('button[type="button"]')
             self.page.keyboard.press('Enter')
 
     def change_zoom_factor(self, page, zoom_factor = 2):

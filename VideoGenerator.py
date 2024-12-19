@@ -3,17 +3,15 @@ import wave
 import ffmpeg
 import random
 from VideoTranscriber import transcribe_comments
+from pydub import AudioSegment
 
 # Define file path for background video
 background_video_path = 'assets/backgroundVideos/Minecraft_1080p_vertical.mp4'
 title_start = 0  # overlay starts at 0.5 seconds
 
 def get_audio_duration(file_path):
-    with wave.open(file_path, 'rb') as audio_file:
-        frames = audio_file.getnframes()
-        rate = audio_file.getframerate()
-        duration = frames / float(rate)
-    return duration
+    audio = AudioSegment.from_file(file_path)
+    return len(audio) / 1000.0
 
 def get_video_duration(file_path):
     probe = ffmpeg.probe(file_path)

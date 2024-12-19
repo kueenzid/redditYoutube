@@ -33,14 +33,22 @@ subreddit_name = 'AskReddit'
 numberOfPosts = 1
 comment_count = 1
 
-output_folder = "Output"
+
+output_folder = 'Output'
+
+#for debugging purposes. normally set to True
 is_screenshot_taker = True
 is_textToSpeech = True
+is_videoGenerator = True
+
+# TTS engines
+COQUI_TTS = 'coqui'
+BARK_TTS = 'bark'
 
 if is_screenshot_taker:
     screenshot_taker = ScreenshotTaker()
 if is_textToSpeech:
-    textToSpeech = TextToSpeech_Local()
+    tts = TextToSpeech_Local(engine=COQUI_TTS)
 
 posts = get_hottest_posts(subreddit_name, numberOfPosts, comment_count)
 
@@ -54,14 +62,16 @@ for post in posts:
         if is_screenshot_taker:
             screenshot_path = os.path.join(pathName, "post_screenshot.png")
             screenshot_taker.take_screenshot(url, screenshot_path, 'shreddit-post')
+            screenshot_taker.close()
 
         if is_textToSpeech:
-            textToSpeech.create_text_to_speech_file(post['Title'], os.path.join(pathName, "title.wav"))
+            tts.create_text_to_speech_file(post['Title'], os.path.join(pathName, "title.wav"))
 
             for i, comment in enumerate(post['Top_Comments']):
-                textToSpeech.create_text_to_speech_file(comment['Body'], os.path.join(pathName, f"comment_{i}.wav"))
+                tts.create_text_to_speech_file(comment['Body'], os.path.join(pathName, f"comment_{i}.wav"))
 
-        generate_video(pathName)
+        if is_videoGenerator:
+            generate_video(pathName)
 
         # Create .txt file with post information
         txt_file_path = os.path.join(pathName, "comments.txt")
@@ -71,9 +81,6 @@ for post in posts:
 
     else:
         print("Failed to fetch posts.")
-
-if is_screenshot_taker:
-    screenshot_taker.close()
 
 # authYoutube()
 # service = get_authenticated_service()
