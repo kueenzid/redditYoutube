@@ -1,5 +1,4 @@
 import os
-import wave
 import ffmpeg
 import random
 from VideoTranscriber import transcribe_comments
@@ -39,8 +38,7 @@ def concatenate_comment_files(comment_audios, concatenated_comments_path):
     # Run the ffmpeg command
     ffmpeg.run(output)
 
-
-def concatenate_audio_files(total_audio_path, title_audio, concatenated_comments_path):
+def concatenate_audio_files(total_audio_path, title_audio, concatenated_comments_path=None):
     # Start with the title audio
     concatenated_audio = ffmpeg.input(title_audio)
 
@@ -50,9 +48,10 @@ def concatenate_audio_files(total_audio_path, title_audio, concatenated_comments
     # List to hold all the input segments
     input_segments = [concatenated_audio, silent]
 
-    # Add the concatenated comments audio
-    comments_audio = ffmpeg.input(concatenated_comments_path)
-    input_segments.extend([comments_audio, silent])
+    # Add the concatenated comments audio if it exists
+    if concatenated_comments_path and os.path.exists(concatenated_comments_path):
+        comments_audio = ffmpeg.input(concatenated_comments_path)
+        input_segments.extend([comments_audio, silent])
 
     # Concatenate all audio segments
     concatenated = ffmpeg.concat(*input_segments, v=0, a=1).node
@@ -63,29 +62,32 @@ def concatenate_audio_files(total_audio_path, title_audio, concatenated_comments
     # Run the ffmpeg command
     ffmpeg.run(output)
 
-def generate_video(path):
+def generate_video(path, comment_count):
     post_screenshot_image = os.path.join(path, 'post_screenshot.png')
     title_audio = os.path.join(path, 'title.wav')
     total_comments_audio_path = os.path.join(path, 'comments_audio.wav')
     total_audio_path = os.path.join(path, 'concatenated_audio.wav')
     transcription_file_path = os.path.join(path, 'transcription.srt')
-    post_info_path = os.path.join(path, 'post_info.txt')
     output_video = os.path.join(path, 'output.mp4')
 
     # Get comment audio files
     comment_files = [f for f in os.listdir(path) if f.startswith('comment_')]
     comment_audios = [os.path.join(path, f) for f in comment_files]
 
-    concatenate_comment_files(comment_audios, total_comments_audio_path)
+    if comment_count > 0 and comment_audios:
+        concatenate_comment_files(comment_audios, total_comments_audio_path)
+        transcribe_comments(total_comments_audio_path, transcription_file_path, get_audio_duration(title_audio))
+    else:
+        total_comments_audio_path = None
+        transcription_file_path = None
+
     concatenate_audio_files(total_audio_path, title_audio, total_comments_audio_path)
 
     # Calculate the total duration of all audio files
     title_duration = get_audio_duration(title_audio)
     total_duration = get_audio_duration(total_audio_path)
 
-    transcribe_comments(total_comments_audio_path, transcription_file_path, title_duration)
-
-# Determine video section
+    # Determine video section
     input_video_duration = get_video_duration(background_video_path)
     start_time = random.randint(0, int(input_video_duration - total_duration))
 
@@ -117,8 +119,9 @@ def generate_video(path):
 
     video = ffmpeg.overlay(video, title_overlay, x=x_position, y=y_position, enable=f'between(t,{title_start},{title_start + title_duration})')
 
-    # Apply the subtitles filter with centered alignment
-    video = video.filter('subtitles', transcription_file_path, force_style='Alignment=10,PrimaryColour=&H0011BEFC,OutlineColour=&H00000000,BoderStyle=1,Outline=1')
+    # Apply the subtitles filter only if a transcription file exists
+    if transcription_file_path and os.path.exists(transcription_file_path):
+        video = video.filter('subtitles', transcription_file_path, force_style='Alignment=10,PrimaryColour=&H0011BEFC,OutlineColour=&H00000000,BoderStyle=1,Outline=1')
 
     # Audio overlay
     audio_overlay = ffmpeg.input(total_audio_path)

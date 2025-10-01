@@ -4,6 +4,12 @@ import os
 from transformers import AutoProcessor, BarkModel
 from TTS.api import TTS
 
+barkSpeaker1 = "v2/en_speaker_1"
+barkSpeaker6 = "v2/en_speaker_6"
+barkSpeaker9 = "v2/en_speaker_9"
+
+preferred_bark_speaker = barkSpeaker6
+
 class TextToSpeech_Local:
     def __init__(self, engine='coqui'):
         self.engine = engine.lower()
@@ -18,7 +24,7 @@ class TextToSpeech_Local:
             os.environ["SUNO_USE_SMALL_MODELS"] = "True"
             self.processor = AutoProcessor.from_pretrained("suno/bark")
             self.model = BarkModel.from_pretrained("suno/bark")
-            self.voice_preset = "v2/en_speaker_6"
+            self.voice_preset = preferred_bark_speaker
         else:
             raise ValueError("Unsupported engine. Choose 'coqui' or 'bark'.")
 
@@ -28,7 +34,9 @@ class TextToSpeech_Local:
             self.tts.tts_to_file(text, speaker_wav="my/cloning/audio.wav", file_path=path)
         elif self.engine == 'bark':
             print("Generating audio with Bark TTS")
-            inputs = self.processor(("[fast-paced]" + text), voice_preset=self.voice_preset)
+            # Add [fast-paced] and [narration] conditioning tokens
+            narration_text = "[narration][fast-paced] " + text
+            inputs = self.processor(narration_text, voice_preset=self.voice_preset)
             audio_array = self.model.generate(**inputs)
             audio_array = audio_array.cpu().numpy().squeeze()
             sample_rate = self.model.generation_config.sample_rate

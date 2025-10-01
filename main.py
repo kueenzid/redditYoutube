@@ -31,24 +31,24 @@ def replaceSpecialCharacters(url):
 
 subreddit_name = 'AskReddit'
 numberOfPosts = 1
-comment_count = 1
+comment_count = 0
 
 
 output_folder = 'Output'
 
-#for debugging purposes. normally set to True
-is_screenshot_taker = True
+# for debugging purposes. normally set to True
+is_screenshot_taker = False
 is_textToSpeech = True
-is_videoGenerator = True
+is_videoGenerator = False
 
-# TTS engines
+# available TTS engines
 COQUI_TTS = 'coqui'
 BARK_TTS = 'bark'
 
 if is_screenshot_taker:
     screenshot_taker = ScreenshotTaker()
 if is_textToSpeech:
-    tts = TextToSpeech_Local(engine=COQUI_TTS)
+    tts = TextToSpeech_Local(engine=BARK_TTS)
 
 posts = get_hottest_posts(subreddit_name, numberOfPosts, comment_count)
 
@@ -71,11 +71,14 @@ for post in posts:
                 tts.create_text_to_speech_file(comment['Body'], os.path.join(pathName, f"comment_{i}.wav"))
 
         if is_videoGenerator:
-            generate_video(pathName)
+            generate_video(pathName, comment_count)
 
         # Create .txt file with post information
         txt_file_path = os.path.join(pathName, "comments.txt")
         with open(txt_file_path, 'w', encoding='utf-8') as txt_file:
+            txt_file.write(f"Title: {post['Title']}\n\n")
+            txt_file.write(f"URL: {post['URL']}\n\n")
+
             for i, comment in enumerate(post['Top_Comments']):
                 txt_file.write(f"{comment['Body']}\n\n")
 
