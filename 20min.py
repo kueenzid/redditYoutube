@@ -1,7 +1,8 @@
 import requests
 import datetime
 
-BASE_URL = "https://www.20min.ch/de"
+# BASE_URL = "https://www.20min.ch/de" #https://www.20min.ch/_next/data/{build_id}/de.json
+BASE_URL = "https://www.20min.ch/wichstige-news" #https://www.20min.ch/_next/data/{build_id}/wichstige-news.json
 def COMMENTS_API(article_id: str) -> str:
     return f"https://api.20min.ch/comment/v1/comments?tenantId=6&contentId={article_id}&limit=10&sortBy=reactions&sortOrder=desc"
 
@@ -14,25 +15,22 @@ def get_build_id():
     import re
     match = re.search(r'"buildId":"([^"]+)"', html)
     if not match:
-        raise ValueError("Build-ID nicht gefunden")
+        raise ValueError("Build-ID not found")
     return match.group(1)
 
 def fetch_articles():
     """Holt alle Artikel aus der Next.js _next/data JSON."""
     build_id = get_build_id()
-    json_url = f"https://www.20min.ch/_next/data/{build_id}/de.json"
+    json_url = f"https://www.20min.ch/_next/data/{build_id}/wichstige-news.json"
+    print({json_url})
     resp = requests.get(json_url)
     resp.raise_for_status()
     data = resp.json()
 
-    # Je nach Version der Seite kann der Pfad zu Artikeln anders sein:
-    # Hier prüfen wir die pageProps
     try:
-        # Oft liegen die Artikel unter pageProps > articles
-        articles = data['pageProps']['store']['pageData']['data']['items'][0]['items'][0]['items']
+        articles = data['pageProps']['store']['pageData']['data']['items'][0]['items'][0]['items'] # für beide base url gleich
     except KeyError:
-        # Falls anders verschachtelt, debug: print(data.keys())
-        raise ValueError("Artikel-Pfad in JSON nicht gefunden")
+        raise ValueError("article-path in JSON not found")
 
     return articles
 
@@ -61,7 +59,10 @@ def top_articles_of_day(n=10):
     return top_articles
 
 if __name__ == "__main__":
-    #print(get_build_id())
+    #buildid = get_build_id()
+    #print(buildid)
+    #json_url = f"https://www.20min.ch/_next/data/{buildid}/wichstige-news.json"
+    #print({json_url})
     top = top_articles_of_day()
     for i, a in enumerate(top, 1):
         print(f"{i}. {a.get('title')} ({a.get('commentCount',0)} Kommentare) - {BASE_URL}{a.get('url')}")
