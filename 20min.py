@@ -1,8 +1,8 @@
 import requests
 import datetime
 
-# BASE_URL = "https://www.20min.ch/de" #https://www.20min.ch/_next/data/{build_id}/de.json
-BASE_URL = "https://www.20min.ch/wichstige-news" #https://www.20min.ch/_next/data/{build_id}/wichstige-news.json
+BASE_URL = "https://www.20min.ch/wichstige-news"
+
 def COMMENTS_API(article_id: str) -> str:
     return f"https://api.20min.ch/comment/v1/comments?tenantId=6&contentId={article_id}&limit=10&sortBy=reactions&sortOrder=desc"
 
@@ -28,7 +28,7 @@ def fetch_articles():
     data = resp.json()
 
     try:
-        articles = data['pageProps']['store']['pageData']['data']['items'][0]['items'][0]['items'] # für beide base url gleich
+        articles = data['pageProps']['store']['pageData']['data']['items'][0]['items'][0]['items']
     except KeyError:
         raise ValueError("article-path in JSON not found")
 
