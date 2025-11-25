@@ -59,10 +59,6 @@ def top_articles_of_day(n=10):
     return top_articles
 
 if __name__ == "__main__":
-    #buildid = get_build_id()
-    #print(buildid)
-    #json_url = f"https://www.20min.ch/_next/data/{buildid}/wichstige-news.json"
-    #print({json_url})
     top = top_articles_of_day()
     for i, a in enumerate(top, 1):
         print(f"{i}. {a.get('title')} ({a.get('commentCount',0)} Kommentare) - {BASE_URL}{a.get('url')}")
