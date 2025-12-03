@@ -45,14 +45,14 @@ class ScreenshotTaker:
 
         await self.page.wait_for_selector("#login-username")
         await self.random_pause()
-        await self.page.fill("#login-username", config.username)
+        await self.page.fill("#login-username input[name='username']", config.username)
 
         await self.random_pause()
         await self.page.keyboard.press("Tab")
 
         await self.page.wait_for_selector("#login-password")
         await self.random_pause()
-        await self.page.fill("#login-password", config.password)
+        await self.page.fill("#login-password input[name='password']", config.password)
 
         await self.random_pause()
 

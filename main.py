@@ -75,7 +75,7 @@ async def main():
                         comment["Body"], os.path.join(pathName, f"comment_{i}.wav")
                     )
 
-            generate_video(pathName)
+            generate_video(pathName, comment_count)
 
             # Create .txt file with post information
             txt_file_path = os.path.join(pathName, "comments.txt")
