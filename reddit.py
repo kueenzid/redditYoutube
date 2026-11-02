@@ -1,6 +1,13 @@
 import praw
+import prawcore
 import config
 import requests
+
+def is_mod_comment(comment, moderators):
+    # distinguished is "moderator" or "admin" when posted with the mod badge,
+    # stickied comments are almost always from AutoModerator or the mods
+    author = comment.author.name.lower() if comment.author else ""
+    return comment.distinguished is not None or comment.stickied or author == "automoderator" or author in moderators
 
 def get_hottest_posts(subreddit_name, limit, comment_count):
     # Initialize the Reddit instance with your credentials
@@ -12,6 +19,12 @@ def get_hottest_posts(subreddit_name, limit, comment_count):
 
     # Access the specified subreddit
     subreddit = reddit.subreddit(subreddit_name)
+
+    # The moderator list is not readable for every subreddit, then only badge and sticky are checked
+    try:
+        moderators = {moderator.name.lower() for moderator in subreddit.moderator()}
+    except prawcore.exceptions.PrawcoreException:
+        moderators = set()
 
     # Fetch the hottest posts
     hottest_posts = subreddit.top(time_filter='day', limit=limit)
@@ -33,9 +46,9 @@ def get_hottest_posts(subreddit_name, limit, comment_count):
             "Top_Comments": []
         }
 
-        # Fetch the top 5 comments for the post
+        # Fetch the top comments for the post, without comments from moderators
         post.comments.replace_more(limit=0)
-        top_comments = post.comments.list()[:comment_count]
+        top_comments = [c for c in post.comments.list() if not is_mod_comment(c, moderators)][:comment_count]
         for comment in top_comments:
             post_info["Top_Comments"].append({
                 "Author": comment.author.name if comment.author else "N/A",
