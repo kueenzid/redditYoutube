@@ -1,7 +1,7 @@
 import whisper
 
 # Subtitle style, ASS colours are &HAABBGGRR
-subtitle_font = "Arial"
+subtitle_font = "Archivo Black"  # from assets/fonts
 subtitle_font_size = 110
 subtitle_color = "&H00FFFFFF"  # white
 highlight_color = "&H00D4FF"  # yellow (#FFD400) for the word that is spoken

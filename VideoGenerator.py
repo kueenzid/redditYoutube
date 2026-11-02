@@ -137,7 +137,7 @@ def generate_video(path, comment_count, language=None):
     # Apply the subtitles filter only if a transcription file exists
     if transcription_file_path and os.path.exists(transcription_file_path):
         # The style is defined in the ASS file (see VideoTranscriber.py)
-        video = video.filter('subtitles', transcription_file_path)
+        video = video.filter('subtitles', transcription_file_path, fontsdir=os.path.join('assets', 'fonts'))
 
     # Audio overlay
     audio_overlay = ffmpeg.input(total_audio_path)

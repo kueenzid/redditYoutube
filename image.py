@@ -58,8 +58,8 @@ def create_custom_image(output_path, text):
 
 
 def load_font(size):
-    # The default Pillow font has no umlauts, so prefer a system font
-    for name in ["arialbd.ttf", "Arial Bold.ttf", "DejaVuSans-Bold.ttf"]:
+    # Archivo Black is close to the 20min font, the default Pillow font has no umlauts
+    for name in [os.path.join("assets", "fonts", "ArchivoBlack-Regular.ttf"), "arialbd.ttf", "Arial Bold.ttf", "DejaVuSans-Bold.ttf"]:
         try:
             return ImageFont.truetype(name, size)
         except OSError:
