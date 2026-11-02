@@ -1,0 +1,17 @@
+coqui-tts
+edge-tts
+ffmpeg-python
+google-api-python-client
+google-auth-oauthlib
+matplotlib
+openai-whisper
+pillow
+playwright
+praw
+pydub
+audioop-lts; python_version >= "3.13"
+requests
+scipy
+torch
+torchaudio
+transformers
