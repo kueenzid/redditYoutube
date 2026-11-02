@@ -4,7 +4,7 @@ from pydub import AudioSegment
 
 # edge-tts voices per language, list all with: edge-tts --list-voices
 edge_voices = {
-    "de": {"title": "de-CH-LeniNeural", "comment": "de-CH-JanNeural"},
+    "de": {"title": "de-DE-SeraphinaMultilingualNeural", "comment": "de-DE-FlorianMultilingualNeural"},
     "en": {"title": "en-US-JennyNeural", "comment": "en-US-GuyNeural"},
 }
 
