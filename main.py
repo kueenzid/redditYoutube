@@ -3,7 +3,7 @@ import os
 import re
 from reddit import get_hottest_posts
 from twenty_min import get_top_articles
-from image import create_custom_image, create_title_card
+from image import create_custom_image, create_title_card, create_comment_card
 from redditScreenshot import ScreenshotTaker
 from TextToSpeech_Local import TextToSpeech_Local
 from TextToSpeech_External import TextToSpeech_External
@@ -84,8 +84,12 @@ async def main():
                 )
             elif source == "20min":
                 create_title_card(
-                    screenshot_path, post["Title"], f"20 Minuten · {post['Comments']} Kommentare"
+                    screenshot_path, post["Title"], "20 Minuten", f"{post['Comments']} Kommentare"
                 )
+                for i, comment in enumerate(post["Top_Comments"]):
+                    create_comment_card(
+                        os.path.join(pathName, f"comment_card_{i}.png"), comment["Author"], comment["Reactions"]
+                    )
 
             if is_textToSpeech:
                 titleTextToSpeech.create_text_to_speech_file(

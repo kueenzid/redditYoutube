@@ -49,6 +49,10 @@ def comment_score(comment):
     reactions = comment.get('reactions', {})
     return reactions.get('exact', 0) + reactions.get('smart', 0) + reactions.get('awesome', 0)
 
+def censor_nickname(nickname):
+    """Zeigt nur den ersten Buchstaben, die Länge des Nicknames bleibt verborgen."""
+    return f"{nickname[:1]}****" if nickname else "Anonym"
+
 def top_articles_of_day(n=10):
     """Gibt die Top-n Artikel nach Kommentaranzahl zurück."""
     articles = fetch_articles()
@@ -73,9 +77,10 @@ def get_top_articles(limit, comment_count, max_comment_length=400):
             "URL": f"{BASE_URL}{article.get('url')}",
             "Comments": article['commentCount'],
             "Top_Comments": [{
-                "Author": c.get('authorNickname', 'N/A'),
+                "Author": censor_nickname(c.get('authorNickname')),
                 "Body": c['body'],
-                "Score": comment_score(c)
+                "Score": comment_score(c),
+                "Reactions": c.get('reactions', {})
             } for c in comments[:comment_count]]
         })
 

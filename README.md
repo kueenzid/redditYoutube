@@ -11,3 +11,5 @@ Direct dependencies are in `requirements.in`. To update the pinned versions:
 `main.py`: `source = "20min"` or `"reddit"`, `tts_engine = "edge"`, `"xtts"`, `"coqui"` or `"bark"`.
 `edge` uses the free Microsoft Edge voices (no API key, unofficial, non-commercial use). Voices for title and comments are set in `TextToSpeech_External.edge_voices`.
 XTTS v2 asks on first run to accept the Coqui CPML licence (non-commercial use only).
+Subtitles are shown word by word, the style (font, size, colours, words per line) is set at the top of `VideoTranscriber.py`.
+Cards and subtitles use Archivo Black from `assets/fonts` (SIL Open Font License, see `assets/fonts/OFL.txt`).
