@@ -2,9 +2,9 @@ import whisper
 import ffmpeg
 from datetime import timedelta
 
-def transcribe_audio_with_whisper(audio_path):
+def transcribe_audio_with_whisper(audio_path, language=None):
     model = whisper.load_model("base")  # Choose between "small", "medium", "large", depending on your needs
-    result = model.transcribe(audio_path)
+    result = model.transcribe(audio_path, language=language)
     return result['text'], result['segments']
 
 def generate_srt(segments, title_duration):
@@ -30,14 +30,14 @@ def save_srt_file(srt_content, output_path):
     with open(output_path, 'w') as srt_file:
         srt_file.write(srt_content)
 
-def transcribe_comments(audio_path, transcription_path, title_duration):
+def transcribe_comments(audio_path, transcription_path, title_duration, language=None):
 
     # Example usage
     audio_path = audio_path  # Path to your existing audio file
     srt_output_path = transcription_path
 
     # 1. Transcribe the audio using Whisper
-    transcription_text, transcription_segments = transcribe_audio_with_whisper(audio_path)
+    transcription_text, transcription_segments = transcribe_audio_with_whisper(audio_path, language)
 
     # 2. Generate SRT format text using the segments returned by Whisper
     srt_text = generate_srt(transcription_segments, title_duration)

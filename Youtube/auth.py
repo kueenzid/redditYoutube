@@ -15,7 +15,7 @@ def authenticate():
     
     # If there are no valid credentials available, let the user log in using device flow.
     if not credentials or not credentials.valid:
-        flow = InstalledAppFlow.from_client_secrets_file(os.path.join("Youtube", "Config", "token.json"), SCOPES, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+        flow = InstalledAppFlow.from_client_secrets_file(os.path.join("Youtube", "Config", "client_secret.json"), SCOPES)
         flow.run_local_server(port=0)
         credentials = flow.credentials
         # Save the credentials for the next run
