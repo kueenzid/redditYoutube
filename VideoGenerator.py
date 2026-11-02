@@ -89,10 +89,14 @@ def generate_video(path, comment_count, language=None):
 
     # Determine video section
     input_video_duration = get_video_duration(background_video_path)
-    start_time = random.randint(0, int(input_video_duration - total_duration))
+    if total_duration <= input_video_duration:
+        start_time = random.randint(0, int(input_video_duration - total_duration))
 
-    # Load the video and trim it
-    video = ffmpeg.input(background_video_path, ss=start_time, t=total_duration)
+        # Load the video and trim it
+        video = ffmpeg.input(background_video_path, ss=start_time, t=total_duration)
+    else:
+        # Audio is longer than the background video, so loop it
+        video = ffmpeg.input(background_video_path, stream_loop=-1, t=total_duration)
 
     # Get dimensions of video and image to center the image
     video_stream_info = ffmpeg.probe(background_video_path)['streams'][0]
