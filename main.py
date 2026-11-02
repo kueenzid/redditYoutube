@@ -27,7 +27,7 @@ def modifyFileName(url):
 
 
 def replaceSpecialCharacters(url):
-    return re.sub("\W", "_", url[25:])
+    return re.sub(r"\W", "_", url[25:])
 
 
 async def main():
