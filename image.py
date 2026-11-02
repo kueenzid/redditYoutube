@@ -67,27 +67,63 @@ def load_font(size):
     return ImageFont.load_default(size=size)
 
 
-def create_title_card(output_path, title, subtitle):
+def wrap_text(text, font, max_width):
+    lines = []
+    for word in text.split():
+        if lines and ImageDraw.Draw(Image.new("RGB", (1, 1))).textlength(f"{lines[-1]} {word}", font=font) <= max_width:
+            lines[-1] = f"{lines[-1]} {word}"
+        else:
+            lines.append(word)
+    return lines
+
+
+def create_title_card(output_path, title, subtitle, highlight=None):
     width = 1000
     padding = 50
     title_font = load_font(56)
     subtitle_font = load_font(32)
+    highlight_font = load_font(72)
 
-    # Wrap the title into lines that fit the card width
-    lines = []
-    for word in title.split():
-        if lines and ImageDraw.Draw(Image.new("RGB", (1, 1))).textlength(f"{lines[-1]} {word}", font=title_font) <= width - 2 * padding:
-            lines[-1] = f"{lines[-1]} {word}"
-        else:
-            lines.append(word)
+    lines = wrap_text(title, title_font, width - 2 * padding)
 
     line_height = 70
-    height = 2 * padding + 60 + len(lines) * line_height
+    highlight_height = 110 if highlight else 0
+    height = 2 * padding + 60 + len(lines) * line_height + highlight_height
 
     image = Image.new("RGB", (width, height), "#1a1a1b")
     draw = ImageDraw.Draw(image)
     draw.text((padding, padding), subtitle, fill="grey", font=subtitle_font)
     for i, line in enumerate(lines):
         draw.text((padding, padding + 60 + i * line_height), line, fill="white", font=title_font)
+    if highlight:
+        draw.text((padding, padding + 60 + len(lines) * line_height + 30), highlight, fill="#FFD400", font=highlight_font)
+
+    image.save(output_path)
+
+
+def create_comment_card(output_path, author, reactions):
+    width = 1000
+    height = 170
+    padding = 35
+    avatar_size = 100
+    name_font = load_font(44)
+    reaction_font = load_font(36)
+
+    image = Image.new("RGB", (width, height), "#1a1a1b")
+    draw = ImageDraw.Draw(image)
+
+    # Avatar with the first letter of the (censored) nickname
+    avatar_box = (padding, padding, padding + avatar_size, padding + avatar_size)
+    draw.ellipse(avatar_box, fill="#0D2880")
+    draw.text(((avatar_box[0] + avatar_box[2]) / 2, (avatar_box[1] + avatar_box[3]) / 2), author[:1].upper(), fill="white", font=name_font, anchor="mm")
+
+    text_x = padding + avatar_size + 30
+    draw.text((text_x, padding), author, fill="white", font=name_font)
+
+    reaction_x = text_x
+    for label, key, color in [("Genau", "exact", "#4CAF50"), ("Quatsch", "nonsense", "#F44336")]:
+        text = f"{reactions.get(key, 0)} {label}"
+        draw.text((reaction_x, padding + 65), text, fill=color, font=reaction_font)
+        reaction_x += draw.textlength(text, font=reaction_font) + 50
 
     image.save(output_path)
