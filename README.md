@@ -2,6 +2,8 @@ use python 3.14
 pip install -r requirements.txt --build-constraint build-constraints.txt
 playwright install
 
+FFmpeg 4–9 must be installed (e.g. `brew install ffmpeg`), it is used for the video and by torchcodec.
+
 Direct dependencies are in `requirements.in`. To update the pinned versions:
 `uv pip compile requirements.in --universal --python-version 3.14 --no-annotate -o requirements.txt`
 

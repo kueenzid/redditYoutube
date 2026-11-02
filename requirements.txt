@@ -134,6 +134,7 @@ tiktoken==0.14.0
 tokenizers==0.23.3
 torch==2.15.0
 torchaudio==2.11.1
+torchcodec==0.17.0
 tqdm==4.70.1
 transformers==5.22.1
 triton==3.9.0 ; (python_full_version < '3.16' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux') or sys_platform == 'linux2'

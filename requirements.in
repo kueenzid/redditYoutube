@@ -1,4 +1,4 @@
-coqui-tts
+coqui-tts[codec]
 edge-tts
 ffmpeg-python
 google-api-python-client
