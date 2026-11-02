@@ -1,12 +1,18 @@
+import os
 import whisper
+from PIL import ImageFont
 
 # Subtitle style, ASS colours are &HAABBGGRR
 subtitle_font = "Archivo Black"  # from assets/fonts
-subtitle_font_size = 110
+subtitle_font_file = os.path.join("assets", "fonts", "ArchivoBlack-Regular.ttf")
+subtitle_font_size = 120
 subtitle_color = "&H00FFFFFF"  # white
-highlight_color = "&H00D4FF"  # yellow (#FFD400) for the word that is spoken
-outline_color = "&H00000000"  # black
-words_per_line = 3
+highlight_color = "&H00D4FF"  # yellow (#FFD400) for the spoken word, only used with more than one word per line
+glow_color = "&H0000D4FF"  # yellow (#FFD400)
+glow_size = 6  # 0 for no glow
+glow_blur = 12
+words_per_line = 1
+max_gap = 0.5  # keep a word on screen until the next one if the pause is shorter (seconds)
 
 def transcribe_audio_with_whisper(audio_path, language=None):
     model = whisper.load_model("base")  # Choose between "small", "medium", "large", depending on your needs
@@ -25,8 +31,14 @@ def clean_word(word):
     # Braces and backslashes would be read as ASS override tags
     return word.strip().replace("{", "").replace("}", "").replace("\\", "").upper()
 
+def font_size_for(words):
+    # Long words get a smaller font so they fit into the 1080 px wide video (minus margins)
+    font = ImageFont.truetype(subtitle_font_file, subtitle_font_size)
+    widest = max(font.getlength(clean_word(w['word'])) for w in words)
+    return min(subtitle_font_size, int(subtitle_font_size * 960 / widest))
+
 def generate_ass(segments, offset):
-    """Shows a few words at a time and highlights the word that is spoken."""
+    """Shows a few words at a time (one by default) with a glow."""
     ass_output = (
         "[Script Info]\n"
         "ScriptType: v4.00+\n"
@@ -35,21 +47,30 @@ def generate_ass(segments, offset):
         "WrapStyle: 0\n\n"
         "[V4+ Styles]\n"
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
-        f"Style: Default,{subtitle_font},{subtitle_font_size},{subtitle_color},{subtitle_color},{outline_color},&H80000000,-1,0,0,0,100,100,0,0,1,8,4,5,60,60,0,1\n\n"
+        f"Style: Default,{subtitle_font},{subtitle_font_size},{subtitle_color},{subtitle_color},{glow_color},&H00000000,0,0,0,0,100,100,0,0,1,{glow_size},0,5,60,60,0,1\n\n"
         "[Events]\n"
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
     )
-    for segment in segments:
-        words = [w for w in segment.get('words', []) if clean_word(w['word'])]
-        for chunk_start in range(0, len(words), words_per_line):
-            chunk = words[chunk_start:chunk_start + words_per_line]
-            for i, word in enumerate(chunk):
-                end = chunk[i + 1]['start'] if i + 1 < len(chunk) else word['end']
+    words = [w for segment in segments for w in segment.get('words', []) if clean_word(w['word'])]
+    chunks = [words[i:i + words_per_line] for i in range(0, len(words), words_per_line)]
+    for chunk_index, chunk in enumerate(chunks):
+        style = f"\\blur{glow_blur}\\fs{font_size_for(chunk)}"
+        for i, word in enumerate(chunk):
+            if i + 1 < len(chunk):
+                end = chunk[i + 1]['start']
+            elif chunk_index + 1 < len(chunks) and chunks[chunk_index + 1][0]['start'] - word['end'] < max_gap:
+                # Avoid flicker: keep the word until the next one appears
+                end = chunks[chunk_index + 1][0]['start']
+            else:
+                end = word['end']
+            if len(chunk) > 1:
                 text = " ".join(
-                    f"{{\\c{highlight_color}&\\fscx115\\fscy115}}{clean_word(w['word'])}{{\\r}}" if j == i else clean_word(w['word'])
+                    f"{{\\c{highlight_color}&\\fscx115\\fscy115}}{clean_word(w['word'])}{{\\r{style}}}" if j == i else clean_word(w['word'])
                     for j, w in enumerate(chunk)
                 )
-                ass_output += f"Dialogue: 0,{format_time(word['start'] + offset)},{format_time(end + offset)},Default,,0,0,0,,{text}\n"
+            else:
+                text = clean_word(word['word'])
+            ass_output += f"Dialogue: 0,{format_time(word['start'] + offset)},{format_time(end + offset)},Default,,0,0,0,,{{{style}}}{text}\n"
     return ass_output
 
 def save_subtitle_file(content, output_path):
