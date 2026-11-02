@@ -2,6 +2,9 @@ use python 3.14
 pip install -r requirements.txt --build-constraint build-constraints.txt
 playwright install
 
+FFmpeg 4–9 with libass must be installed, it is used for the video (subtitles filter) and by torchcodec.
+On macOS the Homebrew `ffmpeg` formula has no libass, use `brew install ffmpeg-full` and `brew unlink ffmpeg && brew link --force ffmpeg-full`.
+
 Direct dependencies are in `requirements.in`. To update the pinned versions:
 `uv pip compile requirements.in --universal --python-version 3.14 --no-annotate -o requirements.txt`
 

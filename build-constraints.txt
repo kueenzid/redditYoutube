@@ -1,5 +1,5 @@
 # Pins the build backend for packages that are only published as source
-# (openai-whisper, docopt), so a new setuptools release can't break the install.
+# (openai-whisper, docopt, gruut), so a new setuptools release can't break the install.
 # pip >= 25.3: pip install -r requirements.txt --build-constraint build-constraints.txt
 # uv:          uv pip install -r requirements.txt --build-constraints build-constraints.txt
 setuptools==84.2.1

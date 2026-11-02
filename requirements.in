@@ -1,8 +1,9 @@
-coqui-tts
+coqui-tts[codec]
 edge-tts
 ffmpeg-python
 google-api-python-client
 google-auth-oauthlib
+gruut[de]  # phonemizer for the "coqui" engine (Jenny, Thorsten), optional in coqui-tts
 matplotlib
 openai-whisper
 pillow
@@ -11,6 +12,7 @@ praw
 pydub
 audioop-lts; python_version >= "3.13"
 requests
+six  # imported by coqui-tts but not declared as a dependency
 scipy
 torch
 torchaudio
