@@ -62,7 +62,7 @@ def concatenate_audio_files(total_audio_path, title_audio, concatenated_comments
     # Run the ffmpeg command
     ffmpeg.run(output)
 
-def generate_video(path, comment_count):
+def generate_video(path, comment_count, language=None):
     post_screenshot_image = os.path.join(path, 'post_screenshot.png')
     title_audio = os.path.join(path, 'title.wav')
     total_comments_audio_path = os.path.join(path, 'comments_audio.wav')
@@ -70,13 +70,13 @@ def generate_video(path, comment_count):
     transcription_file_path = os.path.join(path, 'transcription.srt')
     output_video = os.path.join(path, 'output.mp4')
 
-    # Get comment audio files
-    comment_files = [f for f in os.listdir(path) if f.startswith('comment_')]
-    comment_audios = [os.path.join(path, f) for f in comment_files]
+    # Get comment audio files in order (os.listdir order is arbitrary)
+    comment_audios = [os.path.join(path, f'comment_{i}.wav') for i in range(comment_count)]
+    comment_audios = [f for f in comment_audios if os.path.exists(f)]
 
     if comment_count > 0 and comment_audios:
         concatenate_comment_files(comment_audios, total_comments_audio_path)
-        transcribe_comments(total_comments_audio_path, transcription_file_path, get_audio_duration(title_audio))
+        transcribe_comments(total_comments_audio_path, transcription_file_path, get_audio_duration(title_audio), language)
     else:
         total_comments_audio_path = None
         transcription_file_path = None
@@ -121,7 +121,7 @@ def generate_video(path, comment_count):
 
     # Apply the subtitles filter only if a transcription file exists
     if transcription_file_path and os.path.exists(transcription_file_path):
-        video = video.filter('subtitles', transcription_file_path, force_style='Alignment=10,PrimaryColour=&H0011BEFC,OutlineColour=&H00000000,BoderStyle=1,Outline=1')
+        video = video.filter('subtitles', transcription_file_path, force_style='Alignment=10,PrimaryColour=&H0011BEFC,OutlineColour=&H00000000,BorderStyle=1,Outline=1')
 
     # Audio overlay
     audio_overlay = ffmpeg.input(total_audio_path)
