@@ -67,7 +67,7 @@ def generate_video(path, comment_count, language=None):
     title_audio = os.path.join(path, 'title.wav')
     total_comments_audio_path = os.path.join(path, 'comments_audio.wav')
     total_audio_path = os.path.join(path, 'concatenated_audio.wav')
-    transcription_file_path = os.path.join(path, 'transcription.srt')
+    transcription_file_path = os.path.join(path, 'transcription.ass')
     output_video = os.path.join(path, 'output.mp4')
 
     # Get comment audio files in order (os.listdir order is arbitrary)
@@ -76,7 +76,8 @@ def generate_video(path, comment_count, language=None):
 
     if comment_count > 0 and comment_audios:
         concatenate_comment_files(comment_audios, total_comments_audio_path)
-        transcribe_comments(total_comments_audio_path, transcription_file_path, get_audio_duration(title_audio), language)
+        # The comments start after the title and a 0.5 s pause
+        transcribe_comments(total_comments_audio_path, transcription_file_path, get_audio_duration(title_audio) + 0.5, language)
     else:
         total_comments_audio_path = None
         transcription_file_path = None
@@ -123,9 +124,20 @@ def generate_video(path, comment_count, language=None):
 
     video = ffmpeg.overlay(video, title_overlay, x=x_position, y=y_position, enable=f'between(t,{title_start},{title_start + title_duration})')
 
+    # Overlay the card of each comment while it is read, above the subtitles
+    comment_start = title_start + title_duration + 0.5
+    for i, comment_audio in enumerate(comment_audios):
+        comment_duration = get_audio_duration(comment_audio)
+        comment_card_image = os.path.join(path, f'comment_card_{i}.png')
+        if os.path.exists(comment_card_image):
+            comment_overlay = ffmpeg.input(comment_card_image).filter('scale', target_width, target_height)
+            video = ffmpeg.overlay(video, comment_overlay, x=x_position, y=int(video_height * 0.2), enable=f'between(t,{comment_start},{comment_start + comment_duration})')
+        comment_start += comment_duration + 0.5
+
     # Apply the subtitles filter only if a transcription file exists
     if transcription_file_path and os.path.exists(transcription_file_path):
-        video = video.filter('subtitles', transcription_file_path, force_style='Alignment=10,PrimaryColour=&H0011BEFC,OutlineColour=&H00000000,BorderStyle=1,Outline=1')
+        # The style is defined in the ASS file (see VideoTranscriber.py)
+        video = video.filter('subtitles', transcription_file_path)
 
     # Audio overlay
     audio_overlay = ffmpeg.input(total_audio_path)
