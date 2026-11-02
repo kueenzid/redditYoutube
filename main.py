@@ -38,7 +38,7 @@ async def main():
 
     output_folder = "Output"
     language = "de" if source == "20min" else "en"
-    tts_engine = "xtts"  # "azure" (external), "xtts", "coqui" or "bark"
+    tts_engine = "edge"  # "edge" (external), "xtts", "coqui" or "bark"
     is_screenshot_taker = source == "reddit"
     is_textToSpeech = True
 
@@ -53,10 +53,13 @@ async def main():
                 print("Error occurred while starting the screenshot taker. Retrying...")
 
     if is_textToSpeech:
-        if tts_engine == "azure":
-            textToSpeech = TextToSpeech_External(tts_engine, language)
+        if tts_engine == "edge":
+            # Voices are set in TextToSpeech_External.edge_voices
+            titleTextToSpeech = TextToSpeech_External(tts_engine, language, "title")
+            textToSpeech = TextToSpeech_External(tts_engine, language, "comment")
         else:
             textToSpeech = TextToSpeech_Local(tts_engine, language)
+            titleTextToSpeech = textToSpeech
 
     if source == "20min":
         posts = get_top_articles(numberOfPosts, comment_count)
@@ -85,7 +88,7 @@ async def main():
                 )
 
             if is_textToSpeech:
-                textToSpeech.create_text_to_speech_file(
+                titleTextToSpeech.create_text_to_speech_file(
                     post["Title"], os.path.join(pathName, "title.wav")
                 )
 

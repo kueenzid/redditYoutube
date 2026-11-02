@@ -1,40 +1,31 @@
-import requests
-from xml.sax.saxutils import escape
-import config
+import os
+import edge_tts
+from pydub import AudioSegment
 
-# Azure neural voices, free tier (F0): 500'000 characters per month
-azure_voices = {
-    "en": ("en-US", "en-US-JennyNeural"),
-    "de": ("de-CH", "de-CH-LeniNeural"),  # de-CH-JanNeural for a male voice
+# edge-tts voices per language, list all with: edge-tts --list-voices
+edge_voices = {
+    "de": {"title": "de-CH-LeniNeural", "comment": "de-CH-JanNeural"},
+    "en": {"title": "en-US-JennyNeural", "comment": "en-US-GuyNeural"},
 }
 
-class TextToSpeech_External:
-    def __init__(self, engine='azure', language='en'):
-        self.engine = engine.lower()
-        self.language = language
+# Speaking rate, e.g. "+10%" for faster speech
+edge_rate = "+0%"
 
-        if self.engine == 'azure':
-            print("Initializing Azure TTS")
-            self.url = f"https://{config.azure_speech_region}.tts.speech.microsoft.com/cognitiveservices/v1"
-            self.locale, self.voice = azure_voices[language]
+class TextToSpeech_External:
+    def __init__(self, engine='edge', language='en', role='comment'):
+        self.engine = engine.lower()
+
+        if self.engine == 'edge':
+            print("Initializing edge-tts")
+            self.voice = edge_voices[language][role]
         else:
-            raise ValueError("Unsupported engine. Choose 'azure'.")
+            raise ValueError("Unsupported engine. Choose 'edge'.")
 
     def create_text_to_speech_file(self, text, path):
-        if self.engine == 'azure':
-            print("Generating audio with Azure TTS")
-            ssml = (
-                f"<speak version='1.0' xml:lang='{self.locale}'>"
-                f"<voice name='{self.voice}'>{escape(text)}</voice>"
-                "</speak>"
-            )
-            headers = {
-                "Ocp-Apim-Subscription-Key": config.azure_speech_key,
-                "Content-Type": "application/ssml+xml",
-                "X-Microsoft-OutputFormat": "riff-24khz-16bit-mono-pcm",
-                "User-Agent": "redditYoutube",
-            }
-            resp = requests.post(self.url, data=ssml.encode("utf-8"), headers=headers, timeout=60)
-            resp.raise_for_status()
-            with open(path, "wb") as f:
-                f.write(resp.content)
+        if self.engine == 'edge':
+            print(f"Generating audio with edge-tts ({self.voice})")
+            # edge-tts only returns mp3, the video pipeline expects wav
+            mp3_path = path + ".mp3"
+            edge_tts.Communicate(text, self.voice, rate=edge_rate).save_sync(mp3_path)
+            AudioSegment.from_mp3(mp3_path).export(path, format="wav")
+            os.remove(mp3_path)
