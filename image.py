@@ -55,3 +55,39 @@ def create_custom_image(output_path, text):
 
     # Save the image
     image.save(output_path)
+
+
+def load_font(size):
+    # The default Pillow font has no umlauts, so prefer a system font
+    for name in ["arialbd.ttf", "Arial Bold.ttf", "DejaVuSans-Bold.ttf"]:
+        try:
+            return ImageFont.truetype(name, size)
+        except OSError:
+            pass
+    return ImageFont.load_default(size=size)
+
+
+def create_title_card(output_path, title, subtitle):
+    width = 1000
+    padding = 50
+    title_font = load_font(56)
+    subtitle_font = load_font(32)
+
+    # Wrap the title into lines that fit the card width
+    lines = []
+    for word in title.split():
+        if lines and ImageDraw.Draw(Image.new("RGB", (1, 1))).textlength(f"{lines[-1]} {word}", font=title_font) <= width - 2 * padding:
+            lines[-1] = f"{lines[-1]} {word}"
+        else:
+            lines.append(word)
+
+    line_height = 70
+    height = 2 * padding + 60 + len(lines) * line_height
+
+    image = Image.new("RGB", (width, height), "#1a1a1b")
+    draw = ImageDraw.Draw(image)
+    draw.text((padding, padding), subtitle, fill="grey", font=subtitle_font)
+    for i, line in enumerate(lines):
+        draw.text((padding, padding + 60 + i * line_height), line, fill="white", font=title_font)
+
+    image.save(output_path)
