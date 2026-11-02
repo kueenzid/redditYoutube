@@ -6,6 +6,7 @@ from twenty_min import get_top_articles
 from image import create_custom_image, create_title_card
 from redditScreenshot import ScreenshotTaker
 from TextToSpeech_Local import TextToSpeech_Local
+from TextToSpeech_External import TextToSpeech_External
 from VideoGenerator import generate_video
 
 
@@ -37,7 +38,7 @@ async def main():
 
     output_folder = "Output"
     language = "de" if source == "20min" else "en"
-    tts_engine = "xtts"  # "xtts", "coqui" or "bark"
+    tts_engine = "xtts"  # "azure" (external), "xtts", "coqui" or "bark"
     is_screenshot_taker = source == "reddit"
     is_textToSpeech = True
 
@@ -52,7 +53,10 @@ async def main():
                 print("Error occurred while starting the screenshot taker. Retrying...")
 
     if is_textToSpeech:
-        textToSpeech = TextToSpeech_Local(tts_engine, language)
+        if tts_engine == "azure":
+            textToSpeech = TextToSpeech_External(tts_engine, language)
+        else:
+            textToSpeech = TextToSpeech_Local(tts_engine, language)
 
     if source == "20min":
         posts = get_top_articles(numberOfPosts, comment_count)
