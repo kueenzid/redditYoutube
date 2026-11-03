@@ -1,6 +1,7 @@
 import praw
 import prawcore
 import config
+from textCleanup import removeEmojis
 import requests
 
 def is_mod_comment(comment, moderators):
@@ -48,7 +49,8 @@ def get_hottest_posts(subreddit_name, limit, comment_count):
 
         # Fetch the top comments for the post, without comments from moderators
         post.comments.replace_more(limit=0)
-        top_comments = [c for c in post.comments.list() if not is_mod_comment(c, moderators)][:comment_count]
+        # Comments with only emojis would leave nothing to read
+        top_comments = [c for c in post.comments.list() if not is_mod_comment(c, moderators) and removeEmojis(c.body)][:comment_count]
         for comment in top_comments:
             post_info["Top_Comments"].append({
                 "Author": comment.author.name if comment.author else "N/A",
