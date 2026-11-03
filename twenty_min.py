@@ -2,8 +2,7 @@ import json
 import re
 import requests
 import xml.etree.ElementTree as ET
-from datetime import datetime
-from zoneinfo import ZoneInfo
+from datetime import datetime, timedelta, timezone
 
 WICHTIGSTE_ARTIKEL_URL = "https://www.20min.ch/wichtige-news"
 
@@ -15,7 +14,8 @@ HOMEPAGE_URL = f"{BASE_URL}/"
 # Google-News-Sitemap mit dem Veröffentlichungsdatum der Artikel der letzten Tage
 NEWS_SITEMAP_URL = f"{BASE_URL}/sitemaps/de/news.xml"
 
-SWISS_TIME = ZoneInfo("Europe/Zurich")
+# Nur Artikel, die in den letzten so vielen Stunden erschienen sind
+MAX_AGE_HOURS = 24
 
 COMMENTS_API = "https://api.20min.ch/comment/v1/comments"
 
@@ -78,15 +78,14 @@ def censor_nickname(nickname):
     return f"{nickname[:1]}****" if nickname else "Anonym"
 
 def top_articles_of_day(n=10):
-    """Gibt die Top-n Artikel von heute (Schweizer Zeit) nach Kommentaranzahl zurück."""
+    """Gibt die Top-n Artikel der letzten 24 Stunden nach Kommentaranzahl zurück."""
     dates = fetch_publication_dates()
-    today = datetime.now(SWISS_TIME).date()
+    since = datetime.now(timezone.utc) - timedelta(hours=MAX_AGE_HOURS)
     recent = [a for a in fetch_articles() if str(a['id']) in dates]
-    articles = [a for a in recent if dates[str(a['id'])].astimezone(SWISS_TIME).date() == today]
+    articles = [a for a in recent if dates[str(a['id'])] >= since]
 
     if not articles:
-        # Kurz nach Mitternacht gibt es noch keine Artikel von heute
-        print("Keine Artikel von heute gefunden, nehme die der letzten Tage")
+        print(f"Keine Artikel der letzten {MAX_AGE_HOURS} Stunden gefunden, nehme die der letzten Tage")
         articles = recent
 
     for a in articles:
