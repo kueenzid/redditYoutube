@@ -17,7 +17,6 @@ HIDE_20MIN_OVERLAYS = """() => {
 }"""
 
 # Default profile picture of 20min, used for every comment instead of the real one
-# Copy of https://api.20min.ch/user/static/15@4x.1a9d6907bd8a7b66b15d3dc47dd8533469c08e25431f80e0a865d29ce4753ebc.png
 DEFAULT_20MIN_AVATAR_FILE = os.path.join("assets", "20min", "default_avatar.png")
 
 
