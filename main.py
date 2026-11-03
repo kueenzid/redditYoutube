@@ -3,7 +3,7 @@ import os
 import re
 from reddit import get_hottest_posts
 from twenty_min import get_top_articles, BASE_URL, WICHTIGSTE_ARTIKEL_URL
-from image import create_custom_image, create_title_card, create_comment_card
+from image import create_custom_image, create_title_card
 from redditScreenshot import ScreenshotTaker
 from TextToSpeech_Local import TextToSpeech_Local
 from TextToSpeech_External import TextToSpeech_External
@@ -91,16 +91,18 @@ async def main():
                     create_title_card(
                         screenshot_path, post["Title"], "20 Minuten", f"{post['Comments']} Kommentare"
                     )
-                # Screenshot of the real comment on 20min (comment page sorted by reactions), the drawn card if it is not found
+                # Screenshot of the real comment on 20min (comment page sorted by reactions)
                 card_paths = [os.path.join(pathName, f"comment_card_{i}.png") for i in range(len(post["Top_Comments"]))]
                 found = [False] * len(card_paths)
                 if is_screenshot_taker:
                     found = await screenshot_taker.take_20min_comment_screenshots(
                         f"{BASE_URL}/comment/{post['Id']}/reactions", post["Top_Comments"], card_paths
                     )
-                for i, comment in enumerate(post["Top_Comments"]):
-                    if not found[i]:
-                        create_comment_card(card_paths[i], comment["Author"], comment["Reactions"])
+                missing = [i for i, ok in enumerate(found) if not ok]
+                if missing:
+                    if is_screenshot_taker:
+                        await screenshot_taker.close()
+                    raise RuntimeError(f"No screenshot possible for comment(s) {missing} of {url}, aborting")
 
             if is_textToSpeech:
                 titleTextToSpeech.create_text_to_speech_file(
