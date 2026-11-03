@@ -45,7 +45,7 @@ class ScreenshotTaker:
             self.page.set_default_timeout(60000)
             return
 
-        self.browser = await self.playwright.chromium.launch(headless=False)
+        self.browser = await self.playwright.chromium.launch(headless=True)
         self.context = await self.browser.new_context(
             locale="en-us",
             color_scheme="dark",
