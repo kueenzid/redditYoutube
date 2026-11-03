@@ -1,19 +1,34 @@
+x-app: &app
+  image: reddit-youtube
+  # Chromium needs more shared memory than the Docker default
+  ipc: host
+  environment:
+    - PYTHONUNBUFFERED=1
+  volumes:
+    # Videos and uploaded.json, which keeps runs from uploading an article twice
+    - ./Output:/app/Output
+    # client_secret.json and token.json, the token is refreshed by the container
+    - ./Youtube/Config:/app/Youtube/Config
+    - ./assets/backgroundVideos:/app/assets/backgroundVideos:ro
+    # Only needed for source = "reddit"
+    # - ./config.py:/app/config.py:ro
+    # Whisper and TTS models, so they are downloaded only once
+    - model-cache:/root/.cache
+
 services:
+  # One run: docker compose run --rm app
   app:
+    <<: *app
     build: .
-    image: reddit-youtube
-    # Chromium needs more shared memory than the Docker default
-    ipc: host
-    volumes:
-      # Videos and uploaded.json, which keeps runs from uploading an article twice
-      - ./Output:/app/Output
-      # client_secret.json and token.json, the token is refreshed by the container
-      - ./Youtube/Config:/app/Youtube/Config
-      - ./assets/backgroundVideos:/app/assets/backgroundVideos:ro
-      # Only needed for source = "reddit"
-      # - ./config.py:/app/config.py:ro
-      # Whisper and TTS models, so they are downloaded only once
-      - model-cache:/root/.cache
+
+  # Runs main.py at RUN_TIMES (Swiss time): docker compose up -d scheduler
+  scheduler:
+    <<: *app
+    command: python scheduler.py
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+      - RUN_TIMES=07:30,12:30,18:30
 
 volumes:
   model-cache:

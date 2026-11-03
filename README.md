@@ -32,7 +32,14 @@ Settings like `source` or `youtube_privacy` are in `main.py`, so rebuild the ima
 
 `Output/` (videos and `uploaded.json`), `Youtube/Config/` and `assets/backgroundVideos/` are mounted from the repository folder, the Whisper model is kept in the `model-cache` volume.
 
-Three runs a day with cron on the host (`crontab -e`), `flock` skips a run while the previous one is still running:
+Three runs a day with the `scheduler` service, which runs `main.py` at `RUN_TIMES` (Swiss time, set in `docker-compose.yml`) and restarts with Docker, e.g. on a NAS:
+```
+docker compose up -d scheduler
+docker compose logs -f scheduler
+```
+After changing the code or `RUN_TIMES`: `docker compose build && docker compose up -d scheduler`.
+
+Or with cron on the host (`crontab -e`) instead, `flock` skips a run while the previous one is still running:
 ```
 CRON_TZ=Europe/Zurich
 30 7,12,18 * * * cd /path/to/redditYoutube && flock -n /tmp/reddit-youtube.lock docker compose run --rm app >> cron.log 2>&1
