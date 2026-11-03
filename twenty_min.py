@@ -88,7 +88,7 @@ def censor_nickname(nickname):
     """Zeigt nur den ersten Buchstaben, die Länge des Nicknames bleibt verborgen."""
     return f"{nickname[:1]}****" if nickname else "Anonym"
 
-def top_articles_of_day(n=10):
+def top_articles_of_day(n=10, exclude_ids=()):
     """Gibt die Top-n Artikel der letzten 24 Stunden nach Kommentaranzahl zurück."""
     dates = fetch_publication_dates()
     since = datetime.now(timezone.utc) - timedelta(hours=MAX_AGE_HOURS)
@@ -99,6 +99,9 @@ def top_articles_of_day(n=10):
         print(f"Keine Artikel der letzten {MAX_AGE_HOURS} Stunden gefunden, nehme die der letzten Tage")
         articles = recent
 
+    # Articles that already have a video
+    articles = [a for a in articles if str(a['id']) not in exclude_ids]
+
     for a in articles:
         a['commentCount'] = a.get('community', {}).get('comments', 0)
 
@@ -106,10 +109,10 @@ def top_articles_of_day(n=10):
 
     return articles_sorted[:n]
 
-def get_top_articles(limit, comment_count, max_comment_length=400):
+def get_top_articles(limit, comment_count, max_comment_length=400, exclude_ids=()):
     """Gibt Artikel im selben Format wie reddit.get_hottest_posts() zurück."""
     posts_data = []
-    for article in top_articles_of_day(limit):
+    for article in top_articles_of_day(limit, exclude_ids):
         # Comments with only emojis would leave nothing to read
         comments = [c for c in fetch_comments(article['id']) if len(c['body']) <= max_comment_length and removeEmojis(c['body'])]
         comments.sort(key=comment_score, reverse=True)

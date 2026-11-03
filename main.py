@@ -1,6 +1,8 @@
 import asyncio
+import json
 import os
 import re
+import shutil
 from reddit import get_hottest_posts
 from twenty_min import get_top_articles, BASE_URL, WICHTIGSTE_ARTIKEL_URL
 from image import create_custom_image, create_title_card
@@ -48,6 +50,14 @@ async def main():
     youtube_privacy = "private"  # "private", "unlisted" or "public"
     youtube_category = "23"  # Comedy
 
+    # Articles already uploaded, so that runs several times a day don't make the same video again
+    uploaded_file = os.path.join(output_folder, "uploaded.json")
+    delete_after_upload = True  # delete the folder of a video after its upload
+    uploaded = []
+    if os.path.exists(uploaded_file):
+        with open(uploaded_file, encoding="utf-8") as f:
+            uploaded = json.load(f)
+
     # Check the YouTube login before spending time on the videos
     if upload_youtube:
         youtube = get_authenticated_service()
@@ -72,9 +82,10 @@ async def main():
             titleTextToSpeech = textToSpeech
 
     if source == "20min":
-        posts = get_top_articles(numberOfPosts, comment_count)
+        posts = get_top_articles(numberOfPosts, comment_count, exclude_ids=set(uploaded))
     else:
         posts = get_hottest_posts(subreddit_name, numberOfPosts, comment_count)
+        posts = [post for post in posts if post["URL"] not in uploaded]
 
     for post in posts:
         if post:
@@ -126,6 +137,12 @@ async def main():
 
             generate_video(pathName, comment_count, language)
 
+            # Create .txt file with post information
+            txt_file_path = os.path.join(pathName, "comments.txt")
+            with open(txt_file_path, "w", encoding="utf-8") as txt_file:
+                for i, comment in enumerate(post["Top_Comments"]):
+                    txt_file.write(f"{comment['Body']}\n\n")
+
             if upload_youtube:
                 upload_video(
                     youtube,
@@ -137,11 +154,12 @@ async def main():
                     youtube_privacy,
                 )
 
-            # Create .txt file with post information
-            txt_file_path = os.path.join(pathName, "comments.txt")
-            with open(txt_file_path, "w", encoding="utf-8") as txt_file:
-                for i, comment in enumerate(post["Top_Comments"]):
-                    txt_file.write(f"{comment['Body']}\n\n")
+                uploaded.append(post.get("Id", url))
+                with open(uploaded_file, "w", encoding="utf-8") as f:
+                    json.dump(uploaded, f, indent=1)
+
+                if delete_after_upload:
+                    shutil.rmtree(pathName)
 
         else:
             print("Failed to fetch posts.")
