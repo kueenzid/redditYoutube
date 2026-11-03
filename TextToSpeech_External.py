@@ -3,6 +3,17 @@ import edge_tts
 from pydub import AudioSegment
 
 # edge-tts voices per language, list all with: edge-tts --list-voices
+# German voices:
+#   de-DE-SeraphinaMultilingualNeural  female
+#   de-DE-AmalaNeural                  female
+#   de-DE-KatjaNeural                  female
+#   de-DE-FlorianMultilingualNeural    male
+#   de-DE-ConradNeural                 male
+#   de-DE-KillianNeural                male
+#   de-AT-IngridNeural                 female, Austrian accent
+#   de-AT-JonasNeural                  male, Austrian accent
+#   de-CH-LeniNeural                   female, Swiss accent
+#   de-CH-JanNeural                    male, Swiss accent
 edge_voices = {
     "de": {"title": "de-DE-SeraphinaMultilingualNeural", "comment": "de-DE-FlorianMultilingualNeural"},
     "en": {"title": "en-US-JennyNeural", "comment": "en-US-GuyNeural"},
