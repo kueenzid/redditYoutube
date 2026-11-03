@@ -3,6 +3,24 @@ import asyncio
 from playwright.async_api import async_playwright
 import config
 
+# Removes the cookie banner without accepting it and hides the sticky header and bottom bar
+HIDE_20MIN_OVERLAYS = """() => {
+    document.getElementById('onetrust-consent-sdk')?.remove();
+    document.documentElement.style.overflow = 'auto';
+    document.body.style.overflow = 'auto';
+    for (const element of document.querySelectorAll('body *')) {
+        const position = getComputedStyle(element).position;
+        if (position === 'fixed' || position === 'sticky') element.style.visibility = 'hidden';
+    }
+}"""
+
+# The bookmark button is the last button of a teaser; padding keeps the text off the image edge
+PREPARE_20MIN_TEASER = """teaser => {
+    const buttons = teaser.querySelectorAll('button');
+    if (buttons.length) buttons[buttons.length - 1].style.visibility = 'hidden';
+    teaser.style.padding = '16px';
+}"""
+
 
 class ScreenshotTaker:
     def __init__(self):
@@ -11,8 +29,22 @@ class ScreenshotTaker:
         self.page = None
         self.playwright = None
 
-    async def start(self):
+    async def start(self, source="reddit"):
         self.playwright = await async_playwright().start()
+
+        if source == "20min":
+            # Mobile layout: every teaser is full width, scale 3 keeps small teasers sharp in the video
+            self.browser = await self.playwright.chromium.launch()
+            self.context = await self.browser.new_context(
+                locale="de-CH",
+                color_scheme="dark",
+                viewport={"width": 412, "height": 915},
+                device_scale_factor=3,
+            )
+            self.page = await self.context.new_page()
+            self.page.set_default_timeout(60000)
+            return
+
         self.browser = await self.playwright.chromium.launch(headless=False)
         self.context = await self.browser.new_context(
             locale="en-us",
@@ -79,6 +111,25 @@ class ScreenshotTaker:
 
         element = await self.page.query_selector(css_selector)
         await element.screenshot(path=output_path)
+
+    async def take_20min_screenshot(self, article_id, output_path, urls):
+        """Screenshots the teaser of the article on the first page that has it, returns False if none has it."""
+        for url in urls:
+            await self.page.goto(url, wait_until="domcontentloaded")
+            await self.page.wait_for_timeout(4000)
+            await self.page.evaluate(HIDE_20MIN_OVERLAYS)
+
+            teaser = self.page.locator("article").filter(has=self.page.locator(f'a[href$="-{article_id}"]')).first
+            if await teaser.count() == 0:
+                continue
+
+            await teaser.scroll_into_view_if_needed()
+            await self.page.wait_for_timeout(1500)  # lazy loaded images
+            await self.page.evaluate(HIDE_20MIN_OVERLAYS)
+            await teaser.evaluate(PREPARE_20MIN_TEASER)
+            await teaser.screenshot(path=output_path)
+            return True
+        return False
 
     async def close(self):
         await self.browser.close()

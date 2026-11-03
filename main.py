@@ -2,7 +2,7 @@ import asyncio
 import os
 import re
 from reddit import get_hottest_posts
-from twenty_min import get_top_articles
+from twenty_min import get_top_articles, BASE_URL, WICHTIGSTE_ARTIKEL_URL
 from image import create_custom_image, create_title_card, create_comment_card
 from redditScreenshot import ScreenshotTaker
 from TextToSpeech_Local import TextToSpeech_Local
@@ -39,14 +39,14 @@ async def main():
     output_folder = "Output"
     language = "de" if source == "20min" else "en"
     tts_engine = "edge"  # "edge" (external), "xtts", "coqui" or "bark"
-    is_screenshot_taker = source == "reddit"
+    is_screenshot_taker = True
     is_textToSpeech = True
 
     if is_screenshot_taker:
         screenshot_taker = ScreenshotTaker()
         while True:
             try:
-                await screenshot_taker.start()
+                await screenshot_taker.start(source)
                 break
             except Exception as e:
                 print(e)
@@ -78,14 +78,19 @@ async def main():
             os.makedirs(pathName, exist_ok=True)
 
             screenshot_path = os.path.join(pathName, "post_screenshot.png")
-            if is_screenshot_taker:
-                await screenshot_taker.take_screenshot(
-                    url, screenshot_path, "shreddit-post"
-                )
-            elif source == "20min":
-                create_title_card(
-                    screenshot_path, post["Title"], "20 Minuten", f"{post['Comments']} Kommentare"
-                )
+            if source == "reddit":
+                if is_screenshot_taker:
+                    await screenshot_taker.take_screenshot(
+                        url, screenshot_path, "shreddit-post"
+                    )
+            else:
+                # Older articles are no longer on the homepage, but still on the news page
+                if not (is_screenshot_taker and await screenshot_taker.take_20min_screenshot(
+                    post["Id"], screenshot_path, [BASE_URL + "/", WICHTIGSTE_ARTIKEL_URL]
+                )):
+                    create_title_card(
+                        screenshot_path, post["Title"], "20 Minuten", f"{post['Comments']} Kommentare"
+                    )
                 for i, comment in enumerate(post["Top_Comments"]):
                     create_comment_card(
                         os.path.join(pathName, f"comment_card_{i}.png"), comment["Author"], comment["Reactions"]
