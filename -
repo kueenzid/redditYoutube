@@ -1,0 +1,12 @@
+filelock==4.2.7
+fsspec==2026.9.0
+jinja2==3.1.6
+markupsafe==3.0.4
+mpmath==1.3.0
+networkx==3.7
+setuptools==84.2.1
+sympy==1.14.0
+torch==2.15.0+cpu
+torchaudio==2.11.1+cpu
+torchcodec==0.17.0+cpu
+typing-extensions==4.16.0

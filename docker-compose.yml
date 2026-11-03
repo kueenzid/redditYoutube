@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    image: reddit-youtube
+    # Chromium needs more shared memory than the Docker default
+    ipc: host
+    volumes:
+      # Videos and uploaded.json, which keeps runs from uploading an article twice
+      - ./Output:/app/Output
+      # client_secret.json and token.json, the token is refreshed by the container
+      - ./Youtube/Config:/app/Youtube/Config
+      - ./assets/backgroundVideos:/app/assets/backgroundVideos:ro
+      # Only needed for source = "reddit"
+      # - ./config.py:/app/config.py:ro
+      # Whisper and TTS models, so they are downloaded only once
+      - model-cache:/root/.cache
+
+volumes:
+  model-cache:
