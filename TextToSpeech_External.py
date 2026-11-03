@@ -9,7 +9,7 @@ edge_voices = {
 }
 
 # Speaking rate per role, e.g. "+10%" for faster speech
-edge_rates = {"title": "+15%", "comment": "+20%"}
+edge_rates = {"title": "+15%", "comment": "+15%"}
 
 class TextToSpeech_External:
     def __init__(self, engine='edge', language='en', role='comment'):

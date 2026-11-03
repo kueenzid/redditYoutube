@@ -35,7 +35,7 @@ async def main():
     source = "20min"  # "reddit" or "20min"
     subreddit_name = "ask"
     numberOfPosts = 1
-    comment_count = 2
+    comment_count = 3
 
     output_folder = "Output"
     language = "de" if source == "20min" else "en"
