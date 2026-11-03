@@ -13,3 +13,9 @@ Direct dependencies are in `requirements.in`. To update the pinned versions:
 XTTS v2 asks on first run to accept the Coqui CPML licence (non-commercial use only).
 Subtitles are shown word by word, the style (font, size, colours, words per line) is set at the top of `VideoTranscriber.py`.
 Cards and subtitles use Archivo Black from `assets/fonts` (SIL Open Font License, see `assets/fonts/OFL.txt`).
+
+YouTube upload (`upload_youtube` in `main.py`):
+1. In the Google Cloud Console enable the YouTube Data API v3 and create an OAuth client of type "Desktop app". Save it as `Youtube/Config/client_secret.json`.
+2. Set the OAuth consent screen to "In production", otherwise the login expires after 7 days.
+3. Log in once from the repository root: `python Youtube/auth.py`.
+Videos uploaded by API projects that YouTube has not audited stay private, whatever `youtube_privacy` says.

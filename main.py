@@ -9,6 +9,7 @@ from TextToSpeech_Local import TextToSpeech_Local
 from TextToSpeech_External import TextToSpeech_External
 from VideoGenerator import generate_video
 from textCleanup import removeEmojis
+from Youtube.upload import get_authenticated_service, upload_video
 
 
 def modifyFileName(url):
@@ -42,6 +43,14 @@ async def main():
     tts_engine = "edge"  # "edge" (external), "xtts", "coqui" or "bark"
     is_screenshot_taker = True
     is_textToSpeech = True
+
+    upload_youtube = True  # log in once with: python Youtube/auth.py
+    youtube_privacy = "private"  # "private", "unlisted" or "public"
+    youtube_category = "23"  # Comedy
+
+    # Check the YouTube login before spending time on the videos
+    if upload_youtube:
+        youtube = get_authenticated_service()
 
     if is_screenshot_taker:
         screenshot_taker = ScreenshotTaker()
@@ -117,6 +126,17 @@ async def main():
 
             generate_video(pathName, comment_count, language)
 
+            if upload_youtube:
+                upload_video(
+                    youtube,
+                    os.path.join(pathName, "output.mp4"),
+                    post["Title"],
+                    f"{post['Title']}\n\n{url}\n\n#shorts",
+                    youtube_category,
+                    ["20 Minuten", "Kommentare"] if source == "20min" else ["reddit", "comments"],
+                    youtube_privacy,
+                )
+
             # Create .txt file with post information
             txt_file_path = os.path.join(pathName, "comments.txt")
             with open(txt_file_path, "w", encoding="utf-8") as txt_file:
@@ -128,10 +148,6 @@ async def main():
 
     if is_screenshot_taker:
         await screenshot_taker.close()
-
-    # authYoutube()
-    # service = get_authenticated_service()
-    # upload_video(service, os.path.join("Output", "video.mp4"), posts[0]['Title'], posts[0]['Description'], '22', ['python', 'reddit'])
 
 
 if __name__ == "__main__":

@@ -24,7 +24,11 @@ def get_authenticated_service():
 
     return build('youtube', 'v3', credentials=credentials)
 
-def upload_video(service, video_file, title, description, category_id, tags):
+def upload_video(service, video_file, title, description, category_id, tags, privacy_status='private'):
+    # YouTube rejects < and > and titles longer than 100 characters
+    title = title.replace('<', '').replace('>', '')[:100]
+    description = description.replace('<', '').replace('>', '')
+
     body = {
         'snippet': {
             'title': title,
@@ -33,7 +37,8 @@ def upload_video(service, video_file, title, description, category_id, tags):
             'categoryId': category_id
         },
         'status': {
-            'privacyStatus': 'public'
+            'privacyStatus': privacy_status,
+            'selfDeclaredMadeForKids': False
         }
     }
 
@@ -52,3 +57,4 @@ def upload_video(service, video_file, title, description, category_id, tags):
             print("Uploaded %d%%." % int(status.progress() * 100))
     print("Upload Complete!")
     print("Video ID: %s" % response.get('id'))
+    return response.get('id')
