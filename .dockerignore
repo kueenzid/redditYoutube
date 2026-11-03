@@ -1,0 +1,11 @@
+.git
+.idea
+__pycache__
+venv
+youtubeRedditEnv
+
+# Mounted at runtime, see docker-compose.yml
+Output
+Youtube/Config
+config.py
+assets/backgroundVideos

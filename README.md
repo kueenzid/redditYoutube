@@ -19,3 +19,21 @@ YouTube upload (`upload_youtube` in `main.py`):
 2. Set the OAuth consent screen to "In production", otherwise the login expires after 7 days.
 3. Log in once from the repository root: `python Youtube/auth.py`.
 Videos uploaded by API projects that YouTube has not audited stay private, whatever `youtube_privacy` says.
+
+## Docker
+
+The image contains Python, FFmpeg with libass, headless Chromium and all packages (torch as CPU build).
+Settings like `source` or `youtube_privacy` are in `main.py`, so rebuild the image after changing them.
+
+1. Put the background video into `assets/backgroundVideos/`.
+2. Log in to YouTube once on a computer with a browser (see above), so that `Youtube/Config/` contains `client_secret.json` and `token.json`. On a server without a browser, copy both files there.
+3. Build the image: `docker compose build`
+4. Test one run: `docker compose run --rm app`
+
+`Output/` (videos and `uploaded.json`), `Youtube/Config/` and `assets/backgroundVideos/` are mounted from the repository folder, the Whisper model is kept in the `model-cache` volume.
+
+Three runs a day with cron on the host (`crontab -e`), `flock` skips a run while the previous one is still running:
+```
+CRON_TZ=Europe/Zurich
+30 7,12,18 * * * cd /path/to/redditYoutube && flock -n /tmp/reddit-youtube.lock docker compose run --rm app >> cron.log 2>&1
+```
