@@ -91,10 +91,16 @@ async def main():
                     create_title_card(
                         screenshot_path, post["Title"], "20 Minuten", f"{post['Comments']} Kommentare"
                     )
-                for i, comment in enumerate(post["Top_Comments"]):
-                    create_comment_card(
-                        os.path.join(pathName, f"comment_card_{i}.png"), comment["Author"], comment["Reactions"]
+                # Screenshot of the real comment on 20min (comment page sorted by reactions), the drawn card if it is not found
+                card_paths = [os.path.join(pathName, f"comment_card_{i}.png") for i in range(len(post["Top_Comments"]))]
+                found = [False] * len(card_paths)
+                if is_screenshot_taker:
+                    found = await screenshot_taker.take_20min_comment_screenshots(
+                        f"{BASE_URL}/comment/{post['Id']}/reactions", post["Top_Comments"], card_paths
                     )
+                for i, comment in enumerate(post["Top_Comments"]):
+                    if not found[i]:
+                        create_comment_card(card_paths[i], comment["Author"], comment["Reactions"])
 
             if is_textToSpeech:
                 titleTextToSpeech.create_text_to_speech_file(
