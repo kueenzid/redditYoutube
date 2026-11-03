@@ -7,7 +7,16 @@ EMOJI_PATTERN = re.compile(
 )
 
 
+# One or more emojis in a row, with the spaces and line breaks around them
+EMOJI_RUN_PATTERN = re.compile(r"\s*(?:" + EMOJI_PATTERN.pattern + r"+\s*)+")
+
+
 def removeEmojis(text):
-    # Remove emojis so the TTS does not read them, then fix the spaces they leave
-    text = EMOJI_PATTERN.sub("", text)
-    return re.sub(r"[ \t]{2,}", " ", text).strip()
+    # Keycap emojis like 1️⃣ become the plain digit
+    text = re.sub("([0-9#*])\uFE0F?\u20E3", r"\1", text)
+    # Replace emojis with a comma, so the TTS makes a short pause instead of reading them
+    text = EMOJI_RUN_PATTERN.sub(", ", text)
+    # No comma right after another punctuation mark, and none at the start or end
+    text = re.sub(r"([.,!?;:…])\s*,\s*", r"\1 ", text)
+    text = text.strip(" ,")
+    return re.sub(r"[ \t]{2,}", " ", text)
