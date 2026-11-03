@@ -21,3 +21,8 @@ def authenticate():
         # Save the credentials for the next run
         with open(os.path.join("Youtube", "Config", "token.json"), 'w') as token:
             token.write(credentials.to_json())
+
+
+# Run once from the repository root: python Youtube/auth.py
+if __name__ == "__main__":
+    authenticate()
