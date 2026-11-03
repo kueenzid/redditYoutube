@@ -1,18 +1,29 @@
 import json
 import re
 import requests
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 WICHTIGSTE_ARTIKEL_URL = "https://www.20min.ch/wichtige-news"
 
 BASE_URL = "https://www.20min.ch"
 
+# Die Startseite hat alle aktuellen Artikel, "Wichtige News" auch mehrere Tage alte
+HOMEPAGE_URL = f"{BASE_URL}/"
+
+# Google-News-Sitemap mit dem Veröffentlichungsdatum der Artikel der letzten Tage
+NEWS_SITEMAP_URL = f"{BASE_URL}/sitemaps/de/news.xml"
+
+SWISS_TIME = ZoneInfo("Europe/Zurich")
+
 COMMENTS_API = "https://api.20min.ch/comment/v1/comments"
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-def fetch_articles():
+def fetch_articles(url=HOMEPAGE_URL):
     """Holt alle Artikel aus dem __NEXT_DATA__ JSON im HTML."""
-    resp = requests.get(WICHTIGSTE_ARTIKEL_URL, headers=HEADERS, timeout=15)
+    resp = requests.get(url, headers=HEADERS, timeout=15)
     resp.raise_for_status()
 
     match = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', resp.text, re.S)
@@ -37,6 +48,20 @@ def fetch_articles():
         raise ValueError("no articles found in __NEXT_DATA__")
     return list(articles.values())
 
+def fetch_publication_dates():
+    """Gibt {Artikel-ID: Veröffentlichungszeit} aus der News-Sitemap zurück."""
+    resp = requests.get(NEWS_SITEMAP_URL, headers=HEADERS, timeout=15)
+    resp.raise_for_status()
+    ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9", "news": "http://www.google.com/schemas/sitemap-news/0.9"}
+
+    dates = {}
+    for url in ET.fromstring(resp.content).findall("s:url", ns):
+        match = re.search(r"-(\d+)$", url.findtext("s:loc", "", ns))
+        published = url.findtext("news:news/news:publication_date", None, ns)
+        if match and published:
+            dates[match.group(1)] = datetime.fromisoformat(published)
+    return dates
+
 def fetch_comments(article_id, limit=30):
     """Holt die Kommentare eines Artikels über die Kommentar-API."""
     params = {"tenantId": 6, "contentId": article_id, "limit": limit, "sortBy": "reactions", "sortOrder": "desc"}
@@ -45,17 +70,24 @@ def fetch_comments(article_id, limit=30):
     return [c for c in resp.json().get('comments', []) if c.get('status') == 'ACCEPTED']
 
 def comment_score(comment):
-    """"Genau" und "Smart" zählen als Zustimmung, "Unnötig" oder "Quatsch" nicht."""
-    reactions = comment.get('reactions', {})
-    return reactions.get('exact', 0) + reactions.get('smart', 0) + reactions.get('awesome', 0)
+    """Alle Reaktionen zählen, auch "So nicht" und "Quatsch": umstrittene Kommentare kommen nach oben."""
+    return sum(comment.get('reactions', {}).values())
 
 def censor_nickname(nickname):
     """Zeigt nur den ersten Buchstaben, die Länge des Nicknames bleibt verborgen."""
     return f"{nickname[:1]}****" if nickname else "Anonym"
 
 def top_articles_of_day(n=10):
-    """Gibt die Top-n Artikel nach Kommentaranzahl zurück."""
-    articles = fetch_articles()
+    """Gibt die Top-n Artikel von heute (Schweizer Zeit) nach Kommentaranzahl zurück."""
+    dates = fetch_publication_dates()
+    today = datetime.now(SWISS_TIME).date()
+    recent = [a for a in fetch_articles() if str(a['id']) in dates]
+    articles = [a for a in recent if dates[str(a['id'])].astimezone(SWISS_TIME).date() == today]
+
+    if not articles:
+        # Kurz nach Mitternacht gibt es noch keine Artikel von heute
+        print("Keine Artikel von heute gefunden, nehme die der letzten Tage")
+        articles = recent
 
     for a in articles:
         a['commentCount'] = a.get('community', {}).get('comments', 0)
