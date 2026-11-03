@@ -119,7 +119,7 @@ async def main():
 
             if is_textToSpeech:
                 titleTextToSpeech.create_text_to_speech_file(
-                    post["Title"], os.path.join(pathName, "title.wav")
+                    removeEmojis(post["Title"]), os.path.join(pathName, "title.wav")
                 )
 
                 for i, comment in enumerate(post["Top_Comments"]):
