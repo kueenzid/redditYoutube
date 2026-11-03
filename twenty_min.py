@@ -77,7 +77,7 @@ def fetch_comments(article_id, limit=100):
     params = {"tenantId": 6, "contentId": article_id, "limit": limit, "sortBy": "reactions", "sortOrder": "desc"}
     resp = requests.get(COMMENTS_API, params=params, headers=HEADERS, timeout=15)
     resp.raise_for_status()
-    return [c for c in resp.json().get('comments', []) if c.get('status') == 'ACCEPTED']
+    return resp.json().get('comments', [])
 
 def comment_score(comment):
     """Alle Reaktionen zählen, gewichtet mit REACTION_WEIGHTS: umstrittene Kommentare kommen nach oben."""
