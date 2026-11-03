@@ -1,3 +1,5 @@
+import os
+import base64
 import random
 import asyncio
 from playwright.async_api import async_playwright
@@ -12,6 +14,57 @@ HIDE_20MIN_OVERLAYS = """() => {
         const position = getComputedStyle(element).position;
         if (position === 'fixed' || position === 'sticky') element.style.visibility = 'hidden';
     }
+}"""
+
+# Default profile picture of 20min, used for every comment instead of the real one
+DEFAULT_20MIN_AVATAR_FILE = os.path.join("assets", "20min", "default_avatar.png")
+
+
+def default_20min_avatar():
+    """Returns the default profile picture as data URI, so the page does not load it from 20min."""
+    with open(DEFAULT_20MIN_AVATAR_FILE, "rb") as f:
+        return "data:image/png;base64," + base64.b64encode(f.read()).decode()
+
+# Hides the comment text, time and menu button, censors the nickname and shows the default profile picture,
+# so only nickname and the reaction bar of 20min are left
+PREPARE_20MIN_COMMENT = """(comment, args) => {
+    const normalize = text => text.replace(/\\s+/g, ' ').trim();
+    // The outermost element that starts with the comment text but does not contain the reaction bar
+    const body = [...comment.querySelectorAll('*')].find(
+        e => normalize(e.innerText || '').startsWith(args.prefix) && !/Lesende/.test(e.innerText)
+    );
+    if (body) body.style.display = 'none';
+
+    const nickname = [...comment.querySelectorAll('*')].find(
+        e => e.children.length === 0 && e.textContent.trim() === args.nickname
+    );
+    if (nickname) nickname.textContent = args.censored;
+
+    comment.querySelectorAll('picture source').forEach(source => source.remove());
+    comment.querySelectorAll('img').forEach(image => {
+        image.removeAttribute('srcset');
+        image.src = args.avatar;
+    });
+
+    const top = comment.getBoundingClientRect().top;
+    [...comment.querySelectorAll('*')].filter(e =>
+        e.children.length === 0 && e.getBoundingClientRect().top - top < 80 &&
+        /^(vor |gerade|gestern|\\d{1,2}\\.\\d{1,2}\\.)/i.test(e.textContent.trim())
+    ).forEach(time => time.style.display = 'none');
+    comment.querySelectorAll('button').forEach(button => {
+        if (!button.innerText.trim() && button.getBoundingClientRect().top - top < 80) button.style.visibility = 'hidden';
+    });
+    comment.style.padding = '16px';
+
+    // Replies are nested in the comment below its reaction bar: hide the whole reply thread,
+    // and the screenshot also ends after the bar
+    const label = [...comment.querySelectorAll('*')].find(e => e.children.length === 0 && /Lesende/.test(e.textContent));
+    comment.querySelectorAll('article').forEach(reply => {
+        let thread = reply;
+        while (thread.parentElement && thread.parentElement !== comment && !thread.parentElement.contains(label)) thread = thread.parentElement;
+        thread.style.display = 'none';
+    });
+    return {body: !!body, nickname: !!nickname, bottom: label ? label.getBoundingClientRect().bottom : null};
 }"""
 
 # The bookmark button is the last button of a teaser; padding keeps the text off the image edge
@@ -130,6 +183,47 @@ class ScreenshotTaker:
             await teaser.screenshot(path=output_path)
             return True
         return False
+
+    async def take_20min_comment_screenshots(self, url, comments, output_paths):
+        """Screenshots each comment on the 20min comment page without its text, returns True for every comment found."""
+        await self.page.goto(url, wait_until="domcontentloaded")
+        await self.page.wait_for_timeout(4000)
+        await self.page.evaluate(HIDE_20MIN_OVERLAYS)
+
+        avatar = default_20min_avatar()
+        found = []
+        for comment, output_path in zip(comments, output_paths):
+            prefix = " ".join(comment["Body"].split())[:50]
+            element = self.page.locator("article").filter(has_text=prefix).first
+
+            # The page loads more comments while scrolling
+            for _ in range(30):
+                if await element.count():
+                    break
+                await self.page.mouse.wheel(0, 4000)
+                await self.page.wait_for_timeout(600)
+            if not await element.count():
+                found.append(False)
+                continue
+
+            # Comments with many replies can be taller than the screen, so align the top
+            await element.evaluate("element => element.scrollIntoView({block: 'start'})")
+            await self.page.wait_for_timeout(1000)
+            await self.page.evaluate(HIDE_20MIN_OVERLAYS)
+            result = await element.evaluate(PREPARE_20MIN_COMMENT, {
+                "prefix": prefix, "nickname": comment["Nickname"], "censored": comment["Author"], "avatar": avatar
+            })
+            # Never screenshot an uncensored nickname, the comment text or the replies
+            if not (result["body"] and result["nickname"] and result["bottom"]):
+                found.append(False)
+                continue
+            await self.page.wait_for_timeout(800)  # default profile picture
+            box = await element.bounding_box()
+            await self.page.screenshot(path=output_path, clip={
+                "x": box["x"], "y": box["y"], "width": box["width"], "height": result["bottom"] + 16 - box["y"]
+            })
+            found.append(True)
+        return found
 
     async def close(self):
         await self.browser.close()

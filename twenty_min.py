@@ -119,6 +119,7 @@ def get_top_articles(limit, comment_count, max_comment_length=400):
             "Comments": article['commentCount'],
             "Top_Comments": [{
                 "Author": censor_nickname(c.get('authorNickname')),
+                "Nickname": c.get('authorNickname'),  # only to find and censor it on the comment screenshot
                 "Body": c['body'],
                 "Score": comment_score(c),
                 "Reactions": c.get('reactions', {})
