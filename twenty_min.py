@@ -21,6 +21,16 @@ COMMENTS_API = "https://api.20min.ch/comment/v1/comments"
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
+# Gewicht jeder Reaktion beim Sortieren der Kommentare, "So nicht" zählt doppelt
+REACTION_WEIGHTS = {
+    "exact": 1,        # Genau
+    "awesome": 1,      # Love it
+    "smart": 1,        # Smart
+    "unnecessary": 1,  # Unnötig
+    "nonsense": 1,     # Quatsch
+    "bad": 2,          # So nicht
+}
+
 def fetch_articles(url=HOMEPAGE_URL):
     """Holt alle Artikel aus dem __NEXT_DATA__ JSON im HTML."""
     resp = requests.get(url, headers=HEADERS, timeout=15)
@@ -62,7 +72,7 @@ def fetch_publication_dates():
             dates[match.group(1)] = datetime.fromisoformat(published)
     return dates
 
-def fetch_comments(article_id, limit=30):
+def fetch_comments(article_id, limit=100):
     """Holt die Kommentare eines Artikels über die Kommentar-API."""
     params = {"tenantId": 6, "contentId": article_id, "limit": limit, "sortBy": "reactions", "sortOrder": "desc"}
     resp = requests.get(COMMENTS_API, params=params, headers=HEADERS, timeout=15)
@@ -70,8 +80,8 @@ def fetch_comments(article_id, limit=30):
     return [c for c in resp.json().get('comments', []) if c.get('status') == 'ACCEPTED']
 
 def comment_score(comment):
-    """Alle Reaktionen zählen, auch "So nicht" und "Quatsch": umstrittene Kommentare kommen nach oben."""
-    return sum(comment.get('reactions', {}).values())
+    """Alle Reaktionen zählen, gewichtet mit REACTION_WEIGHTS: umstrittene Kommentare kommen nach oben."""
+    return sum(REACTION_WEIGHTS.get(key, 1) * count for key, count in comment.get('reactions', {}).items())
 
 def censor_nickname(nickname):
     """Zeigt nur den ersten Buchstaben, die Länge des Nicknames bleibt verborgen."""
