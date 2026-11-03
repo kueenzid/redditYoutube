@@ -2,7 +2,6 @@ import os
 import base64
 import random
 import asyncio
-import requests
 from playwright.async_api import async_playwright
 import config
 
@@ -18,19 +17,12 @@ HIDE_20MIN_OVERLAYS = """() => {
 }"""
 
 # Default profile picture of 20min, used for every comment instead of the real one
-DEFAULT_20MIN_AVATAR_URL = "https://api.20min.ch/user/static/15@4x.1a9d6907bd8a7b66b15d3dc47dd8533469c08e25431f80e0a865d29ce4753ebc.png"
-# Downloaded once and not committed, the image belongs to 20min and the repo is public
+# Copy of https://api.20min.ch/user/static/15@4x.1a9d6907bd8a7b66b15d3dc47dd8533469c08e25431f80e0a865d29ce4753ebc.png
 DEFAULT_20MIN_AVATAR_FILE = os.path.join("assets", "20min", "default_avatar.png")
 
 
 def default_20min_avatar():
     """Returns the default profile picture as data URI, so the page does not load it from 20min."""
-    if not os.path.exists(DEFAULT_20MIN_AVATAR_FILE):
-        resp = requests.get(DEFAULT_20MIN_AVATAR_URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=15)
-        resp.raise_for_status()
-        os.makedirs(os.path.dirname(DEFAULT_20MIN_AVATAR_FILE), exist_ok=True)
-        with open(DEFAULT_20MIN_AVATAR_FILE, "wb") as f:
-            f.write(resp.content)
     with open(DEFAULT_20MIN_AVATAR_FILE, "rb") as f:
         return "data:image/png;base64," + base64.b64encode(f.read()).decode()
 
