@@ -3,6 +3,7 @@ import re
 import requests
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
+from textCleanup import removeEmojis
 
 WICHTIGSTE_ARTIKEL_URL = "https://www.20min.ch/wichtige-news"
 
@@ -109,7 +110,8 @@ def get_top_articles(limit, comment_count, max_comment_length=400):
     """Gibt Artikel im selben Format wie reddit.get_hottest_posts() zurück."""
     posts_data = []
     for article in top_articles_of_day(limit):
-        comments = [c for c in fetch_comments(article['id']) if len(c['body']) <= max_comment_length]
+        # Comments with only emojis would leave nothing to read
+        comments = [c for c in fetch_comments(article['id']) if len(c['body']) <= max_comment_length and removeEmojis(c['body'])]
         comments.sort(key=comment_score, reverse=True)
 
         posts_data.append({
