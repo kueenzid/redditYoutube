@@ -22,6 +22,10 @@ COMMENTS_API = "https://api.20min.ch/comment/v1/comments"
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
+# Die nach Reaktionen sortierte Kommentarseite zeigt sicher nur die ersten 10 Kommentare,
+# nur diese lassen sich fotografieren
+COMMENTS_ON_PAGE = 10
+
 # Gewicht jeder Reaktion beim Sortieren der Kommentare, "So nicht" zählt doppelt
 REACTION_WEIGHTS = {
     "exact": 1,        # Genau
@@ -113,8 +117,10 @@ def get_top_articles(limit, comment_count, max_comment_length=400, exclude_ids=(
     """Gibt Artikel im selben Format wie reddit.get_hottest_posts() zurück."""
     posts_data = []
     for article in top_articles_of_day(limit, exclude_ids):
+        # The API sorts by reactions like the comment page, which only shows the first COMMENTS_ON_PAGE.
         # Comments with only emojis would leave nothing to read
-        comments = [c for c in fetch_comments(article['id']) if len(c['body']) <= max_comment_length and removeEmojis(c['body'])]
+        comments = fetch_comments(article['id'])[:COMMENTS_ON_PAGE]
+        comments = [c for c in comments if len(c['body']) <= max_comment_length and removeEmojis(c['body'])]
         comments.sort(key=comment_score, reverse=True)
 
         posts_data.append({
