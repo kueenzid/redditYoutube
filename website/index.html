@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>20Hirnzellen – Short video generator</title>
+  <meta name="description" content="A tool that turns public news-article comments into short videos and uploads them to its own YouTube channel.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>20Hirnzellen</h1>
+    <p class="lead">A tool that turns publicly available news-article comments into short videos and uploads them to its own YouTube channel.</p>
+
+    <h2>What this app does</h2>
+    <p>
+      20Hirnzellen is a small, self-hosted program. Several times a day it picks a widely discussed
+      news article of the day, reads the article's public reader comments, and automatically assembles
+      a short vertical video from them: a spoken voice-over, on-screen subtitles, and a screenshot of
+      the article and its comments. The finished video is then uploaded to the operator's own YouTube
+      channel as a private video for review.
+    </p>
+
+    <h2>How it uses Google services</h2>
+    <p>
+      The app uses the YouTube Data API for a single purpose: to upload the videos it creates to the
+      operator's own YouTube channel. It requests only the
+      <code>youtube.upload</code> permission. It does not read, change, or delete any other content of
+      the account, and it is operated by its owner for their own channel only.
+    </p>
+
+    <h2>Who it is for</h2>
+    <p>
+      This is a personal project operated by its author. It is not a public service and has no user
+      accounts or sign-up.
+    </p>
+
+    <footer>
+      <a href="index.html">Home</a>
+      <a href="privacy.html">Privacy policy</a>
+    </footer>
+  </main>
+</body>
+</html>
