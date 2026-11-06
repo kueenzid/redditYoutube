@@ -58,3 +58,9 @@ def upload_video(service, video_file, title, description, category_id, tags, pri
     print("Upload Complete!")
     print("Video ID: %s" % response.get('id'))
     return response.get('id')
+
+
+def set_thumbnail(service, video_id, image_file):
+    # Needs a verified channel, YouTube may not accept it for every Short
+    service.thumbnails().set(videoId=video_id, media_body=MediaFileUpload(image_file)).execute()
+    print("Thumbnail set.")
