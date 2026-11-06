@@ -9,9 +9,9 @@ from image import create_custom_image, create_title_card
 from redditScreenshot import ScreenshotTaker
 from TextToSpeech_Local import TextToSpeech_Local
 from TextToSpeech_External import TextToSpeech_External
-from VideoGenerator import generate_video
+from VideoGenerator import generate_video, extract_first_frame
 from textCleanup import removeEmojis
-from Youtube.upload import get_authenticated_service, upload_video
+from Youtube.upload import get_authenticated_service, upload_video, set_thumbnail
 
 
 def modifyFileName(url):
@@ -47,7 +47,8 @@ async def main():
     is_textToSpeech = True
 
     upload_youtube = True  # log in once with: python Youtube/auth.py
-    youtube_privacy = "private"  # "private", "unlisted" or "public"
+    # Videos stay private until YouTube has audited the API project, whatever this says
+    youtube_privacy = "public"  # "private", "unlisted" or "public"
     youtube_category = "23"  # Comedy
 
     # Articles already uploaded, so that runs several times a day don't make the same video again
@@ -144,7 +145,7 @@ async def main():
                     txt_file.write(f"{comment['Body']}\n\n")
 
             if upload_youtube:
-                upload_video(
+                video_id = upload_video(
                     youtube,
                     os.path.join(pathName, "output.mp4"),
                     post["Title"],
@@ -153,6 +154,14 @@ async def main():
                     ["20 Minuten", "Kommentare"] if source == "20min" else ["reddit", "comments"],
                     youtube_privacy,
                 )
+
+                # The first frame (the article) as thumbnail, a failure does not stop the run
+                try:
+                    thumbnail_path = os.path.join(pathName, "thumbnail.jpg")
+                    extract_first_frame(os.path.join(pathName, "output.mp4"), thumbnail_path)
+                    set_thumbnail(youtube, video_id, thumbnail_path)
+                except Exception as e:
+                    print(f"Thumbnail not set: {e}")
 
                 uploaded.append(post.get("Id", url))
                 with open(uploaded_file, "w", encoding="utf-8") as f:

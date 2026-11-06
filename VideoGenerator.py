@@ -62,6 +62,10 @@ def concatenate_audio_files(total_audio_path, title_audio, concatenated_comments
     # Run the ffmpeg command
     ffmpeg.run(output)
 
+def extract_first_frame(video_file, image_file):
+    """Saves the first frame of the video as image, used as YouTube thumbnail."""
+    ffmpeg.input(video_file).output(image_file, vframes=1, **{'q:v': 2}).run(overwrite_output=True, quiet=True)
+
 def generate_video(path, comment_count, language=None):
     post_screenshot_image = os.path.join(path, 'post_screenshot.png')
     title_audio = os.path.join(path, 'title.wav')
