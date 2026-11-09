@@ -25,7 +25,7 @@ Videos uploaded by API projects that YouTube has not audited stay private, whate
 The image contains Python, FFmpeg with libass, headless Chromium and all packages (torch as CPU build).
 Settings like `source` or `youtube_privacy` are in `main.py`, so rebuild the image after changing them.
 
-1. Put the background video into `assets/backgroundVideos/`.
+1. Put the background videos (vertical, 1080x1920) into `assets/backgroundVideos/`. Every video uses a random one.
 2. Log in to YouTube once on a computer with a browser (see above), so that `Youtube/Config/` contains `client_secret.json` and `token.json`. On a server without a browser, copy both files there.
 3. Build the image: `docker compose build`
 4. Test one run: `docker compose run --rm app`
