@@ -1,4 +1,5 @@
 import os
+import random
 import edge_tts
 from pydub import AudioSegment
 
@@ -14,8 +15,18 @@ from pydub import AudioSegment
 #   de-AT-JonasNeural                  male, Austrian accent
 #   de-CH-LeniNeural                   female, Swiss accent
 #   de-CH-JanNeural                    male, Swiss accent
+# The title always has the same voice, every comment of a video gets a different one from the list
 edge_voices = {
-    "de": {"title": "de-DE-SeraphinaMultilingualNeural", "comment": "de-DE-FlorianMultilingualNeural"},
+    "de": {
+        "title": "de-DE-SeraphinaMultilingualNeural",
+        "comment": [
+            "de-DE-FlorianMultilingualNeural",
+            "de-DE-ConradNeural",
+            "de-DE-KillianNeural",
+            "de-DE-KatjaNeural",
+            "de-DE-AmalaNeural",
+        ],
+    },
     "en": {"title": "en-US-JennyNeural", "comment": "en-US-GuyNeural"},
 }
 
@@ -28,16 +39,26 @@ class TextToSpeech_External:
 
         if self.engine == 'edge':
             print("Initializing edge-tts")
-            self.voice = edge_voices[language][role]
+            voices = edge_voices[language][role]
+            self.voices = voices if isinstance(voices, list) else [voices]
+            self.voice = self.voices[0]
             self.rate = edge_rates[role]
         else:
             raise ValueError("Unsupported engine. Choose 'edge'.")
 
-    def create_text_to_speech_file(self, text, path):
+    def pick_voices(self, count):
+        """Random voices for count comments, a voice repeats only when there are more comments than voices."""
+        voices = []
+        while len(voices) < count:
+            voices += random.sample(self.voices, len(self.voices))
+        return voices[:count]
+
+    def create_text_to_speech_file(self, text, path, voice=None):
+        voice = voice or self.voice
         if self.engine == 'edge':
-            print(f"Generating audio with edge-tts ({self.voice})")
+            print(f"Generating audio with edge-tts ({voice})")
             # edge-tts only returns mp3, the video pipeline expects wav
             mp3_path = path + ".mp3"
-            edge_tts.Communicate(text, self.voice, rate=self.rate).save_sync(mp3_path)
+            edge_tts.Communicate(text, voice, rate=self.rate).save_sync(mp3_path)
             AudioSegment.from_mp3(mp3_path).export(path, format="wav")
             os.remove(mp3_path)

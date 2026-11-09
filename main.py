@@ -131,10 +131,15 @@ async def main():
                     removeEmojis(post["Title"]), os.path.join(pathName, "title.wav")
                 )
 
-                for i, comment in enumerate(post["Top_Comments"]):
-                    textToSpeech.create_text_to_speech_file(
-                        removeEmojis(comment["Body"]), os.path.join(pathName, f"comment_{i}.wav")
-                    )
+                comments = post["Top_Comments"]
+                if tts_engine == "edge":
+                    voices = textToSpeech.pick_voices(len(comments))
+                for i, comment in enumerate(comments):
+                    text, wav_path = removeEmojis(comment["Body"]), os.path.join(pathName, f"comment_{i}.wav")
+                    if tts_engine == "edge":
+                        textToSpeech.create_text_to_speech_file(text, wav_path, voices[i])
+                    else:
+                        textToSpeech.create_text_to_speech_file(text, wav_path)
 
             generate_video(pathName, comment_count, language)
 
