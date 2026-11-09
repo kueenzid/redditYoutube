@@ -150,13 +150,18 @@ async def main():
                     txt_file.write(f"{comment['Body']}\n\n")
 
             if upload_youtube:
+                # YouTube shows the first 3 hashtags above the title
+                if source == "20min":
+                    description = f"{post['Title']}\n\nQuelle: 20 Minuten\n{url}\n\n#20hirnzellen #20minuten #schweiz"
+                else:
+                    description = f"{post['Title']}\n\n{url}\n\n#shorts"
                 video_id = upload_video(
                     youtube,
                     os.path.join(pathName, "output.mp4"),
                     post["Title"],
-                    f"{post['Title']}\n\n{url}\n\n#shorts",
+                    description,
                     youtube_category,
-                    ["20 Minuten", "Kommentare"] if source == "20min" else ["reddit", "comments"],
+                    ["20 Hirnzellen", "20 Minuten", "Kommentare", "Schweiz"] if source == "20min" else ["reddit", "comments"],
                     youtube_privacy,
                 )
 
