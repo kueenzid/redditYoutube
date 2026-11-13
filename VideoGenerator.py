@@ -4,9 +4,15 @@ import random
 from VideoTranscriber import transcribe_comments
 from pydub import AudioSegment
 
-# Define file path for background video
-background_video_path = 'assets/backgroundVideos/Minecraft_1080p_vertical.mp4'
+# Every video gets a random background video from this folder
+background_video_folder = 'assets/backgroundVideos'
 title_start = 0  # overlay starts at 0.5 seconds
+
+def pick_background_video():
+    videos = [f for f in os.listdir(background_video_folder) if f.lower().endswith(('.mp4', '.mov', '.webm', '.mkv'))]
+    if not videos:
+        raise FileNotFoundError(f"No background video in {background_video_folder}")
+    return os.path.join(background_video_folder, random.choice(videos))
 
 def get_audio_duration(file_path):
     audio = AudioSegment.from_file(file_path)
@@ -93,6 +99,8 @@ def generate_video(path, comment_count, language=None):
     total_duration = get_audio_duration(total_audio_path)
 
     # Determine video section
+    background_video_path = pick_background_video()
+    print(f"Background video: {background_video_path}")
     input_video_duration = get_video_duration(background_video_path)
     if total_duration <= input_video_duration:
         start_time = random.randint(0, int(input_video_duration - total_duration))

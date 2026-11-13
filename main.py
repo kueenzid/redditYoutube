@@ -131,10 +131,15 @@ async def main():
                     removeEmojis(post["Title"]), os.path.join(pathName, "title.wav")
                 )
 
-                for i, comment in enumerate(post["Top_Comments"]):
-                    textToSpeech.create_text_to_speech_file(
-                        removeEmojis(comment["Body"]), os.path.join(pathName, f"comment_{i}.wav")
-                    )
+                comments = post["Top_Comments"]
+                if tts_engine == "edge":
+                    voices = textToSpeech.pick_voices(len(comments))
+                for i, comment in enumerate(comments):
+                    text, wav_path = removeEmojis(comment["Body"]), os.path.join(pathName, f"comment_{i}.wav")
+                    if tts_engine == "edge":
+                        textToSpeech.create_text_to_speech_file(text, wav_path, voices[i])
+                    else:
+                        textToSpeech.create_text_to_speech_file(text, wav_path)
 
             generate_video(pathName, comment_count, language)
 
@@ -145,13 +150,18 @@ async def main():
                     txt_file.write(f"{comment['Body']}\n\n")
 
             if upload_youtube:
+                # YouTube shows the first 3 hashtags above the title
+                if source == "20min":
+                    description = f"{post['Title']}\n\nQuelle: 20 Minuten\n{url}\n\n#20hirnzellen #20minuten #schweiz"
+                else:
+                    description = f"{post['Title']}\n\n{url}\n\n#shorts"
                 video_id = upload_video(
                     youtube,
                     os.path.join(pathName, "output.mp4"),
                     post["Title"],
-                    f"{post['Title']}\n\n{url}\n\n#shorts",
+                    description,
                     youtube_category,
-                    ["20 Minuten", "Kommentare"] if source == "20min" else ["reddit", "comments"],
+                    ["20 Hirnzellen", "20 Minuten", "Kommentare", "Schweiz"] if source == "20min" else ["reddit", "comments"],
                     youtube_privacy,
                 )
 
