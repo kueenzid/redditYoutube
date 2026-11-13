@@ -1,5 +1,4 @@
 import os
-import whisper
 from PIL import ImageFont
 
 # Subtitle style, ASS colours are &HAABBGGRR
@@ -17,6 +16,7 @@ max_line_width = 920  # the video is 1080 px wide, a line gets as many words as 
 max_gap = 0.5  # a longer pause starts a new line, a shorter one keeps the line on screen (seconds)
 
 def transcribe_audio_with_whisper(audio_path, language=None):
+    import whisper  # only loaded for TTS engines that return no word times
     model = whisper.load_model("base")  # Choose between "small", "medium", "large", depending on your needs
     result = model.transcribe(audio_path, language=language, word_timestamps=True)
     return result['text'], result['segments']
@@ -87,6 +87,11 @@ def generate_ass(segments, offset):
 def save_subtitle_file(content, output_path):
     with open(output_path, 'w', encoding='utf-8') as subtitle_file:
         subtitle_file.write(content)
+
+def save_word_subtitles(words, transcription_path, offset):
+    """Subtitles from the word times of the TTS, words is a list of {'word', 'start', 'end'}."""
+    save_subtitle_file(generate_ass([{'words': words}], offset), transcription_path)
+    print(f"Subtitle file saved as {transcription_path}")
 
 def transcribe_comments(audio_path, transcription_path, offset, language=None):
     # 1. Transcribe the audio using Whisper, with a timestamp for every word

@@ -1,7 +1,8 @@
+import json
 import os
 import ffmpeg
 import random
-from VideoTranscriber import transcribe_comments
+from VideoTranscriber import transcribe_comments, save_word_subtitles
 from pydub import AudioSegment
 
 # Every video gets a random background video from this folder
@@ -68,6 +69,19 @@ def concatenate_audio_files(total_audio_path, title_audio, concatenated_comments
     # Run the ffmpeg command
     ffmpeg.run(output)
 
+def load_comment_words(comment_audios):
+    """Word times written by the TTS, shifted to their place in the concatenated comments. None if a comment has none."""
+    words = []
+    comment_start = 0
+    for comment_audio in comment_audios:
+        words_file = os.path.splitext(comment_audio)[0] + '.json'
+        if not os.path.exists(words_file):
+            return None
+        with open(words_file, encoding='utf-8') as f:
+            words += [{**w, 'start': w['start'] + comment_start, 'end': w['end'] + comment_start} for w in json.load(f)]
+        comment_start += get_audio_duration(comment_audio) + 0.5
+    return words
+
 def extract_first_frame(video_file, image_file):
     """Saves the first frame of the video as image, used as YouTube thumbnail."""
     ffmpeg.input(video_file).output(image_file, vframes=1, **{'q:v': 2}).run(overwrite_output=True, quiet=True)
@@ -87,7 +101,13 @@ def generate_video(path, comment_count, language=None):
     if comment_count > 0 and comment_audios:
         concatenate_comment_files(comment_audios, total_comments_audio_path)
         # The comments start after the title and a 0.5 s pause
-        transcribe_comments(total_comments_audio_path, transcription_file_path, get_audio_duration(title_audio) + 0.5, language)
+        comments_start = get_audio_duration(title_audio) + 0.5
+        words = load_comment_words(comment_audios)
+        if words is not None:
+            save_word_subtitles(words, transcription_file_path, comments_start)
+        else:
+            # The TTS engine returned no word times, so Whisper has to find them
+            transcribe_comments(total_comments_audio_path, transcription_file_path, comments_start, language)
     else:
         total_comments_audio_path = None
         transcription_file_path = None

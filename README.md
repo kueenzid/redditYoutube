@@ -12,6 +12,7 @@ Direct dependencies are in `requirements.in`. To update the pinned versions:
 `edge` uses the free Microsoft Edge voices (no API key, unofficial, non-commercial use). Voices for title and comments are set in `TextToSpeech_External.edge_voices`.
 XTTS v2 asks on first run to accept the Coqui CPML licence (non-commercial use only).
 Subtitles show one line of words with the spoken word highlighted, the style (font, size, colours, line width) is set at the top of `VideoTranscriber.py`.
+With `edge` the subtitles are the text that is read, timed with the word times edge-tts returns. The other engines return no word times, there Whisper transcribes the audio.
 Cards and subtitles use Archivo Black from `assets/fonts` (SIL Open Font License, see `assets/fonts/OFL.txt`).
 
 YouTube upload (`upload_youtube` in `main.py`):
