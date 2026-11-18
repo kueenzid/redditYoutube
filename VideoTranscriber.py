@@ -5,14 +5,16 @@ from PIL import ImageFont
 # Subtitle style, ASS colours are &HAABBGGRR
 subtitle_font = "Archivo Black"  # from assets/fonts
 subtitle_font_file = os.path.join("assets", "fonts", "ArchivoBlack-Regular.ttf")
-subtitle_font_size = 120
+subtitle_font_size = 96
+# libass sizes a font by its OS/2 line height, so text is narrower than Pillow measures it (measured for Archivo Black)
+ass_font_scale = 0.74
 subtitle_color = "&H00FFFFFF"  # white
-highlight_color = "&H00D4FF"  # yellow (#FFD400) for the spoken word, only used with more than one word per line
-glow_color = "&H0000D4FF"  # yellow (#FFD400)
-glow_size = 6  # 0 for no glow
-glow_blur = 12
-words_per_line = 1
-max_gap = 0.5  # keep a word on screen until the next one if the pause is shorter (seconds)
+highlight_color = "&H00D4FF"  # yellow (#FFD400) for the spoken word
+outline_color = "&H00000000"  # black, the yellow word would not be readable on a yellow glow
+outline_size = 6  # 0 for no outline
+outline_blur = 4
+max_line_width = 920  # the video is 1080 px wide, a line gets as many words as fit
+max_gap = 0.5  # a longer pause starts a new line, a shorter one keeps the line on screen (seconds)
 
 def transcribe_audio_with_whisper(audio_path, language=None):
     model = whisper.load_model("base")  # Choose between "small", "medium", "large", depending on your needs
@@ -31,14 +33,26 @@ def clean_word(word):
     # Braces and backslashes would be read as ASS override tags
     return word.strip().replace("{", "").replace("}", "").replace("\\", "").upper()
 
-def font_size_for(words):
-    # Long words get a smaller font so they fit into the 1080 px wide video (minus margins)
+def line_width(words):
     font = ImageFont.truetype(subtitle_font_file, subtitle_font_size)
-    widest = max(font.getlength(clean_word(w['word'])) for w in words)
-    return min(subtitle_font_size, int(subtitle_font_size * 960 / widest))
+    return font.getlength(" ".join(clean_word(w['word']) for w in words)) * ass_font_scale
+
+def split_into_lines(words):
+    """Fills every line with as many words as fit, a pause of max_gap or more starts a new line."""
+    lines = []
+    for word in words:
+        if lines and word['start'] - lines[-1][-1]['end'] < max_gap and line_width(lines[-1] + [word]) <= max_line_width:
+            lines[-1].append(word)
+        else:
+            lines.append([word])
+    return lines
+
+def font_size_for(words):
+    # A single word longer than the line gets a smaller font so it fits
+    return min(subtitle_font_size, int(subtitle_font_size * max_line_width / line_width(words)))
 
 def generate_ass(segments, offset):
-    """Shows a few words at a time (one by default) with a glow."""
+    """Shows one line of words at a time with an outline, the spoken word is highlighted."""
     ass_output = (
         "[Script Info]\n"
         "ScriptType: v4.00+\n"
@@ -47,29 +61,26 @@ def generate_ass(segments, offset):
         "WrapStyle: 0\n\n"
         "[V4+ Styles]\n"
         "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
-        f"Style: Default,{subtitle_font},{subtitle_font_size},{subtitle_color},{subtitle_color},{glow_color},&H00000000,0,0,0,0,100,100,0,0,1,{glow_size},0,5,60,60,0,1\n\n"
+        f"Style: Default,{subtitle_font},{subtitle_font_size},{subtitle_color},{subtitle_color},{outline_color},&H00000000,0,0,0,0,100,100,0,0,1,{outline_size},0,5,60,60,0,1\n\n"
         "[Events]\n"
         "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
     )
     words = [w for segment in segments for w in segment.get('words', []) if clean_word(w['word'])]
-    chunks = [words[i:i + words_per_line] for i in range(0, len(words), words_per_line)]
-    for chunk_index, chunk in enumerate(chunks):
-        style = f"\\blur{glow_blur}\\fs{font_size_for(chunk)}"
-        for i, word in enumerate(chunk):
-            if i + 1 < len(chunk):
-                end = chunk[i + 1]['start']
-            elif chunk_index + 1 < len(chunks) and chunks[chunk_index + 1][0]['start'] - word['end'] < max_gap:
-                # Avoid flicker: keep the word until the next one appears
-                end = chunks[chunk_index + 1][0]['start']
+    lines = split_into_lines(words)
+    for line_index, line in enumerate(lines):
+        style = f"\\blur{outline_blur}\\fs{font_size_for(line)}"
+        for i, word in enumerate(line):
+            if i + 1 < len(line):
+                end = line[i + 1]['start']
+            elif line_index + 1 < len(lines) and lines[line_index + 1][0]['start'] - word['end'] < max_gap:
+                # Avoid flicker: keep the line until the next one appears
+                end = lines[line_index + 1][0]['start']
             else:
                 end = word['end']
-            if len(chunk) > 1:
-                text = " ".join(
-                    f"{{\\c{highlight_color}&\\fscx115\\fscy115}}{clean_word(w['word'])}{{\\r{style}}}" if j == i else clean_word(w['word'])
-                    for j, w in enumerate(chunk)
-                )
-            else:
-                text = clean_word(word['word'])
+            text = " ".join(
+                f"{{\\c{highlight_color}&}}{clean_word(w['word'])}{{\\c{subtitle_color}&}}" if j == i else clean_word(w['word'])
+                for j, w in enumerate(line)
+            )
             ass_output += f"Dialogue: 0,{format_time(word['start'] + offset)},{format_time(end + offset)},Default,,0,0,0,,{{{style}}}{text}\n"
     return ass_output
 
