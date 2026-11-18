@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import edge_tts
@@ -33,6 +34,22 @@ edge_voices = {
 # Speaking rate per role, e.g. "+10%" for faster speech
 edge_rates = {"title": "+15%", "comment": "+15%"}
 
+def add_punctuation(text, words):
+    """edge-tts returns the words without the punctuation around them, this takes it from the text."""
+    position = 0
+    for word in words:
+        start = text.find(word['word'], position)
+        if start == -1:
+            continue
+        end = start + len(word['word'])
+        while start > position and not text[start - 1].isspace() and not text[start - 1].isalnum():
+            start -= 1
+        while end < len(text) and not text[end].isspace() and not text[end].isalnum():
+            end += 1
+        word['word'] = text[start:end]
+        position = end
+    return words
+
 class TextToSpeech_External:
     def __init__(self, engine='edge', language='en', role='comment'):
         self.engine = engine.lower()
@@ -59,6 +76,17 @@ class TextToSpeech_External:
             print(f"Generating audio with edge-tts ({voice})")
             # edge-tts only returns mp3, the video pipeline expects wav
             mp3_path = path + ".mp3"
-            edge_tts.Communicate(text, voice, rate=self.rate).save_sync(mp3_path)
+            words = []
+            with open(mp3_path, "wb") as mp3_file:
+                for chunk in edge_tts.Communicate(text, voice, rate=self.rate, boundary="WordBoundary").stream_sync():
+                    if chunk["type"] == "audio":
+                        mp3_file.write(chunk["data"])
+                    elif chunk["type"] == "WordBoundary":
+                        # Offset and duration are in units of 100 ns
+                        start, end = chunk["offset"] / 1e7, (chunk["offset"] + chunk["duration"]) / 1e7
+                        words.append({"word": chunk["text"], "start": start, "end": end})
             AudioSegment.from_mp3(mp3_path).export(path, format="wav")
             os.remove(mp3_path)
+            # The time of every word, so the subtitles need no speech recognition
+            with open(os.path.splitext(path)[0] + ".json", "w", encoding="utf-8") as words_file:
+                json.dump(add_punctuation(text, words), words_file, ensure_ascii=False)
